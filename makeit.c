@@ -62,7 +62,7 @@ void	makeit()
    int			i, nok, next;
 
    next = 0;
-   nok = 1
+    nok = 1;
 
 /* Processing start date and time */
   thetimet = time(NULL);
@@ -386,8 +386,6 @@ void	makeit()
            prefs.image_name[0]);
 
   NFPRINTF(OUTPUT, "Closing files");
-
-  endcat();
 
 /* End CHECK-image processing */
   if (prefs.check_flag)

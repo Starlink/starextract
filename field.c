@@ -53,6 +53,7 @@ picstruct	*newfield(char *filename, int flags, int nok)
 
   {
    picstruct	*field;
+   int margin;
 
 /* First allocate memory for the new field (and nullify pointers) */
   QCALLOC(field, picstruct, 1);

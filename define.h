@@ -126,6 +126,7 @@
 
 #define	FBSIZE	2880L	/* size (in bytes) of one FITS block */
 
+/*
 #define	FITSTOF(k, def) \
 			(st[0]=0,((point = fitsnfind(buf, k, n))? \
 				 fixexponent(point), \
