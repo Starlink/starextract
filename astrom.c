@@ -10,8 +10,9 @@
 *
 *	Contents:	Astrometrical computations.
 *
-*	Last modify:	05/04/99: (EB)
-*	Last modify:	13/06/98 (EB)
+*	Last modify:	13/07/2006
+*
+*       History:
 *                       04/01/99 (PWD): Converted to use NDF AST
 *                       information for coordinate transformations
 *                       (including precession).  Model of local affine
@@ -21,10 +22,6 @@
 *                       astTran2s.
 *                       Added R2D and D2R as these have been lost from
 *                       AST (2.0).
-*	Last modify:	03/04/2003
-*                       (EB): 2.3.
-*	Last modify:	26/11/2003
-*	Last modify:	24/08/2005
 *
 *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
@@ -83,10 +80,10 @@ void initastrom( picstruct *field ) {
      current = astAnnul( current );
      blank = astAnnul( blank );
 
-     /*-- Compute an "average linear matrix" (at field center) */
-     compute_wcs( field, (field->width+1)/2.0, (field->height+1)/2.0 );
+/*-- Compute an "average linear matrix" (at field center) */
+    compute_wcs(field, (field->width+1)/2.0, (field->height+1)/2.0);
 
-     /*---- Compute Pole coordinates in J2000 and/or B1950 for THETAs */
+/*---- Compute Pole coordinates in J2000 and/or B1950 for THETAs */
      if (FLAG(obj2.theta2000) || FLAG(obj2.theta1950)
 	|| FLAG(obj2.poserr_theta2000) || FLAG(obj2.poserr_theta1950)
 	|| FLAG(obj2.win_theta2000) || FLAG(obj2.win_theta1950)
@@ -112,8 +109,9 @@ void initastrom( picstruct *field ) {
                "not have a valid WCS" );
    }
 
-   /* Override astrometric definitions only if user supplies a pixel-scale */
-   if ( prefs.pixel_scale == 0.0 ) {
+/* Override astrometric definitions only if user supplies a pixel-scale */
+  if (prefs.pixel_scale == 0.0)
+    {
      as->pixscale = sqrt(fabs(as->lindet));
      field->pixscale = 3600.0*as->pixscale;	/* in arcsec2 */
    } else {
@@ -127,14 +125,16 @@ void initastrom( picstruct *field ) {
 /*
   Compute real WORLD coordinates and dimensions according to WCS info.
 */
-void computeastrom(picstruct *field, objstruct *obj) {
+void	computeastrom(picstruct *field, objstruct *obj)
+
+  {
   astromstruct	*as;
   double	*lm, *wcspos;
 
   as = field->astrom;
   lm = as->linmat;
 
-  /* If working with WCS, compute WORLD coordinates and local matrix */
+/* If working with WCS, compute WORLD coordinates and local matrix */
   if (FLAG(obj2.mxw))
     {
     if (as->wcs_flag)
@@ -165,15 +165,15 @@ void computeastrom(picstruct *field, objstruct *obj) {
       }
     }
 
-/* Same for peak-flux positions */
+/* Idem for peak-flux positions */
   if (FLAG(obj2.peakxw))
     {
      if (as->wcs_flag)
        {
-        wcspos = compute_wcs( field, (double)obj->peakx, (double)obj->peaky );
+      wcspos = compute_wcs(field, (double)obj->peakx, (double)obj->peaky);
         obj2->peakalphas = obj2->peakxw = wcspos[0];
         obj2->peakdeltas = obj2->peakyw = wcspos[1];
-        if ( FLAG(obj2.peakalpha2000 ) )
+      if (FLAG(obj2.peakalpha2000))
           {
            fk5( field, wcspos[0], wcspos[1], &obj2->peakalpha2000, &obj2->peakdelta2000);
            if ( FLAG(obj2.peakalpha1950 ) )
@@ -239,7 +239,7 @@ void computeastrom(picstruct *field, objstruct *obj) {
   }
 
 /* Express shape parameters in WORLD frame */
-  if ( FLAG(obj2.mx2w) )
+  if (FLAG(obj2.mx2w))
     astrom_shapeparam(field, obj);
   if (FLAG(obj2.win_mx2w))
     astrom_winshapeparam(field, obj);
@@ -278,11 +278,12 @@ static void norm_wcs( AstFrameSet *fset, double *x, double *y )
 
 /****************************** compute_wcs *********************************/
 /*
-  Compute real WORLD coordinates and local distortion matrix according to the
-  WCS info.
+Compute real WORLD coordinates and local distortion matrix according to the
+WCS info.
 */
 double  *compute_wcs(picstruct *field, double mx, double my)
-{
+
+  {
   astromstruct	*as;
   static double	wcspos[2], wcspos0[2];
   double        xin[1], yin[1], xout[1], yout[1];
@@ -353,7 +354,7 @@ double  *compute_wcs(picstruct *field, double mx, double my)
     as->pixscale = sqrt(fabs(as->lindet));
 
   return wcspos0;
-}
+  }
 
 
 /****************************** astrom_shapeparam ****************************/
@@ -691,10 +692,12 @@ void	astrom_winerrparam(picstruct *field, objstruct *obj)
 Copy astrometrical structures.
 */
 void	copyastrom(picstruct *infield, picstruct *outfield)
-{
+
+  {
   astromstruct	*inas, *outas;
 
-  if (infield->astrom) {
+  if (infield->astrom)
+    {
     QMEMCPY(infield->astrom, outfield->astrom, astromstruct, 1);
     inas = infield->astrom;
     outas = outfield->astrom;
@@ -706,7 +709,7 @@ void	copyastrom(picstruct *infield, picstruct *outfield)
   }
 
   return;
-}
+  }
 
 
 /******************************* endastrom ***********************************/
@@ -725,7 +728,7 @@ void	endastrom(picstruct *field)
 
   free(as);
   return;
-}
+  }
 
 
 /****************************** fk5 *****************************************/

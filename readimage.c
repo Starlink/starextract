@@ -11,7 +11,10 @@
 *
 *	Contents:	functions for input of image data.
 *
-*	Last modify:	28/10/98 (AJC)
+*	Last modify:	13/07/2006
+*
+*       History:
+*	        	28/10/98 (AJC)
 *                          In line with V2.0.15
 *                       14/12/98 (PWD):
 *                          Added USHORT and UBYTE support.
@@ -313,7 +316,7 @@ void	readdata(picstruct *field, PIXTYPE *ptr, int size)
   }
 
 
-/******************************** readidata **********************************/
+/******************************** readidata *********************************/
 /*
 read and convert input data stream in FLAGTYPE (unsigned int) format.
   field    is pointer to the image picstruct

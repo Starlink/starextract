@@ -9,7 +9,9 @@
 *
 *	Contents:	functions for output of catalog data.
 *
-*	Last modify:	20/07/99 (EB):
+*	Last modify:	13/07/2006
+*
+*       History:
 *	Last modify:	23/10/98 (AJC):
 *                          Make SKYCAT header have correct column headings
 *                          Assume 1 block header for FITS.
@@ -28,11 +30,6 @@
 *                          under Tcl/ICL. 
 *                       16/02/00 (PWD):
 *                          Added initialisation of average radii.
-*	Last modify:	16/12/2002
-*                          (EB): 2.3
-*	Last modify:	26/11/2003
-*	Last modify:	25/08/2005
-*	Last modify:	19/10/2005
 *
 *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
@@ -46,7 +43,6 @@
 #include	<string.h>
 
 #include	"define.h"
-/*#include        "mydefs.h"*/
 #include	"globals.h"
 #include	"prefs.h"
 #include	"fits/fitscat.h"
@@ -54,12 +50,14 @@
 #include	"sexhead.h"
 #include	"sexhead1.h"
 #include	"sexheadsc.h"
+#include	"xml.h"
 
 catstruct	*fitscat;
-tabstruct	*objtab;
+tabstruct	*objtab = NULL;
 FILE		*ascfile;
 keystruct       *saveobjkey = NULL; /* PWD, should initialise this */
 char		*buf;
+int		catopen_flag = 0;
 
 /******************************* readcatparams *******************************/
 /*
@@ -144,9 +142,9 @@ void	readcatparams(char *filename)
       if (key->naxis)
         {
 /*------ Only outobj2 vectors are dynamic */
-          if ( !*((char **)key->ptr))
+        if (!*((char **)key->ptr))
             {
-              QMALLOC( *((char **)key->ptr), char, key->nbytes);
+          QMALLOC(*((char **)key->ptr), char, key->nbytes);
               key->ptr = *((char **)key->ptr);
               key->allocflag = 1;
             }
@@ -382,15 +380,15 @@ void	initcat(void)
   if (prefs.cat_type == CAT_NONE)
     return;
 
-  if (prefs.cat_type == ASCII_HEAD || prefs.cat_type == ASCII
-      || prefs.cat_type == ASCII_SKYCAT)
+  update_tab(objtab);
+  if (prefs.cat_type == ASCII_HEAD || prefs.cat_type == ASCII ||
+	prefs.cat_type == ASCII_SKYCAT || prefs.cat_type == ASCII_VO)
     {
     if (prefs.pipe_flag)
       ascfile = stdout;
     else
       if (!(ascfile = fopen(prefs.cat_name, "w+")))
         error(EXIT_FAILURE,"*Error*: cannot open ", prefs.cat_name);
-    update_tab(objtab);
     if (prefs.cat_type == ASCII_HEAD && (key = objtab->key))
       for (i=0,n=1; i++<objtab->nkey; key=key->nextkey)
         {
@@ -442,6 +440,12 @@ void	initcat(void)
 /*AJC endinsert*/
       fprintf(ascfile, "\n------------------\n");
       }
+    else if (prefs.cat_type == ASCII_VO && objtab->key) 
+      {
+      write_xml_header(ascfile);
+      write_vo_fields(ascfile);
+      fprintf(ascfile, "   <DATA><TABLEDATA>\n");
+      }
     }
   else
     {
@@ -471,6 +475,62 @@ void	initcat(void)
       }
     }
 
+  catopen_flag = 1;
+
+  return;
+  }
+
+
+/****** write_vo_fields *******************************************************
+PROTO	int	write_vo_fields(FILE *file)
+PURPOSE	Write the list of columns to an XML-VOTable file or stream
+INPUT	Pointer to the output file (or stream).
+OUTPUT	-.
+NOTES	-.
+AUTHOR	E. Bertin (IAP)
+VERSION	14/07/2006
+ ***/
+void	write_vo_fields(FILE *file)
+  {
+   keystruct	*key;
+   char		datatype[40], arraysize[40], str[40];
+   int		i, d;
+
+  if (!objtab || !objtab->key)
+    return;
+  key=objtab->key;
+  for (i=0; i++<objtab->nkey; key=key->nextkey)
+    {
+/*--- indicate datatype, arraysize, width and precision attributes */
+/*--- Handle multidimensional arrays */
+    arraysize[0] = '\0';
+    if (key->naxis>1)
+      {
+      for (d=0; d<key->naxis; d++)
+        {
+        sprintf(str, "%s%d", d?"x":" arraysize=\"", key->naxisn[d]);
+        strcat(arraysize, str);
+        }
+      strcat(arraysize, "\"");
+      }
+    switch(key->ttype)
+      {
+      case T_BYTE:	strcpy(datatype, "unsignedByte"); break;
+      case T_SHORT:	strcpy(datatype, "short"); break;
+      case T_LONG:	strcpy(datatype, "int"); break;
+      case T_FLOAT:	strcpy(datatype, "float"); break;
+      case T_DOUBLE:	strcpy(datatype, "double"); break;
+      default:		error(EXIT_FAILURE,
+			"*Internal Error*: Unknown datatype in ",
+			"initcat()");
+      }
+    fprintf(file,
+	"  <FIELD name=\"%s\" ucd=\"%s\" datatype=\"%s\" unit=\"%s\"%s>\n",
+	key->name, key->voucd, datatype,key->vounit, arraysize);
+    fprintf(file, "   <DESCRIPTION>%s</DESCRIPTION>\n", key->comment);
+    fprintf(file, "  </FIELD>\n");
+    }
+
   return;
   }
 
@@ -487,8 +547,8 @@ void	reinitcat(picstruct *field)
   if (prefs.cat_type == CAT_NONE)
     return;
 
-  if (prefs.cat_type != ASCII_HEAD && prefs.cat_type != ASCII
-      && prefs.cat_type != ASCII_SKYCAT)
+  if (prefs.cat_type != ASCII_HEAD && prefs.cat_type != ASCII &&
+	prefs.cat_type != ASCII_SKYCAT && prefs.cat_type != ASCII_VO)
     {
     update_tab(objtab);
     switch(prefs.cat_type)
@@ -598,6 +658,9 @@ void	writecat(int n, objliststruct *objlist)
     case ASCII_SKYCAT:
       print_obj(ascfile, objtab);
       break;
+    case ASCII_VO:
+      voprint_obj(ascfile, objtab);
+      break;
 
     case CAT_NONE:
       break;
@@ -614,11 +677,17 @@ void	writecat(int n, objliststruct *objlist)
 /*
 Terminate the catalog output.
 */
-void	endcat()
+void	endcat(char *error)
   {
    keystruct	*key;
    int		i;
 
+  if (!catopen_flag)
+    {
+    if (prefs.cat_type == ASCII_VO)
+      write_xmlerror(prefs.cat_name, error);
+    return;
+    }
   switch(prefs.cat_type)
     {
     case ASCII:
@@ -628,8 +697,19 @@ void	endcat()
       break;
 
     case ASCII_SKYCAT:
-      /* PWD: move fprintf to before fclose */
       fprintf(ascfile, skycattail);
+      if (!prefs.pipe_flag)
+        fclose(ascfile);
+      break;
+
+    case ASCII_VO:
+      fprintf(ascfile, "    </TABLEDATA></DATA>\n");
+      fprintf(ascfile, "  </TABLE>\n");
+/*---- Add configuration file meta-data */
+      write_xml_meta(ascfile, error);
+      fprintf(ascfile, "</RESOURCE>\n");
+      fprintf(ascfile, "</VOTABLE>\n");
+
       if (!prefs.pipe_flag)
         fclose(ascfile);
       break;
@@ -656,6 +736,7 @@ void	endcat()
   objtab->key = NULL;
   objtab->nkey = 0;
   free_tab(objtab);
+  objtab = NULL;
 
   return;
   }
@@ -677,6 +758,7 @@ void	reendcat()
     case ASCII:
     case ASCII_HEAD:
     case ASCII_SKYCAT:
+    case ASCII_VO:
       break;
 
     case FITS_LDAC:

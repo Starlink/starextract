@@ -10,14 +10,13 @@
 *
 *	Contents:	Astrometrical stuff.
 *
-*	Last modify:	01/06/97 (EB):
+*	Last modify:	13/07/2006
+*
+*       History
 *                       17/12/98 (PWD):
 *                          Removed unused parts of structures
 *                       04/01/99 (PWD):
 *                          Added cvt component for precession AstFrameSet.
-*	Last modify:	24/01/2003
-*                          (EB): 2.3.
-*	Last modify:	15/07/2005
 *
 *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
@@ -31,6 +30,8 @@
 #define		MJD2000	51544.50000	/* Modified Julian date for J2000.0 */
 #define		MJD1950	33281.92346	/* Modified Julian date for B1950.0 */
 #define		JU2TROP	1.0000214	/* 1 Julian century in tropical units*/
+#define		NAXIS	3		/* Max number of FITS axes */
+#define		MAMA_CORFLEX	3.3e-5	/* MAMA coordinate correction factor */
 
 /*------------------------------- structures --------------------------------*/
 

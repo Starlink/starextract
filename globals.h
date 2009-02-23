@@ -9,11 +9,11 @@
 *
 *	Contents:	global declarations.
 *
-*	Last modify:   25/05/99
+*	Last modify:	14/07/2006
+*
+*       History:
 *                      02/11/98 (AJC)
 *                        Add initialise flag
-*	Last modify:   02/04/2003
-*	Last modify:	28/11/2003
 *
 *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
@@ -42,7 +42,7 @@ char			gstr[MAXCHAR];
 extern void	allocparcelout(void),
 		analyse(picstruct *, picstruct *, int, objliststruct *),
 		blankit(char *, int),
-                endcat(void),
+                endcat(char *error),
                 reendcat(void),
                 closecheck(void),
 		copydata(picstruct *, int, int),
@@ -78,7 +78,9 @@ extern void	allocparcelout(void),
 		sexmove(double, double),
 		updateparamflags(void),
 		useprefs(void),
-		writecat(int, objliststruct *);
+		writecat(int, objliststruct *),
+		write_error(char *msg1, char *msg2),
+		write_vo_fields(FILE *file);
 
 extern float	hmedian(float *, int);
 

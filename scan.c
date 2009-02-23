@@ -10,7 +10,7 @@
 *	Contents:	functions for extraction of connected pixels from
 *			a pixmap.
 *
-*	Last modify:	28/11/2003
+*	Last modify:	29/11/2005
 *
 *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
@@ -47,8 +47,8 @@ INPUT   Measurement field pointer,
         Detection weight-map field pointer,
 OUTPUT  -.
 NOTES   -.
-AUTHOR  E. Bertin (IAP & Leiden & ESO)
-VERSION 02/04/2003
+AUTHOR  E. Bertin (IAP)
+VERSION 29/11/2005
  ***/
 void	scanimage(picstruct *field, picstruct *dfield, picstruct **pffield,
 		int nffield, picstruct *wfield, picstruct *dwfield)
@@ -69,13 +69,15 @@ void	scanimage(picstruct *field, picstruct *dfield, picstruct **pffield,
 			varthreshflag;
    short	       	trunflag;
    PIXTYPE		thresh, relthresh, cdnewsymbol, cdvar,
-			*scan,*dscan,*cdscan,*dwscan,*cdwscan,*scant,*wscan;
+			*scan,*dscan,*cdscan,*dwscan,*cdwscan,*cdwscanp,
+			*scant, *wscan,*wscanp;
    FLAGTYPE		*pfscan[MAXFLAG];
    status		cs, ps, *psstack;
    int			*start, *end, ymax;
 
-  scan = dscan = cdscan = cdwscan = wscan = NULL;/* Avoid gcc -Wall warnings */
-  victim = NULL;				/* Avoid gcc -Wall warnings */
+/* Avoid gcc -Wall warnings */
+  scan = dscan = cdscan = cdwscan = cdwscanp = wscan = wscanp = NULL;
+  victim = NULL;			/* Avoid gcc -Wall warnings */
   blankh = 0;				/* Avoid gcc -Wall warnings */
 /*----- Beginning of the main loop: Initialisations  */
   thecat.ntotal = thecat.ndetect = 0;
@@ -140,7 +142,13 @@ void	scanimage(picstruct *field, picstruct *dfield, picstruct **pffield,
     {
     QMALLOC(cdscan, PIXTYPE, stacksize);
     if (cdwfield)
-      QMALLOC(cdwscan, PIXTYPE, stacksize);
+      {
+      QCALLOC(cdwscan, PIXTYPE, stacksize);
+      if (PLISTEXIST(wflag))
+        {
+        QMALLOC(cdwscanp, PIXTYPE, stacksize);
+        }
+      }
 /*-- One needs a buffer to protect filtering if source-blanking applies */
     if (prefs.blank_flag)
       {
@@ -200,9 +208,13 @@ void	scanimage(picstruct *field, picstruct *dfield, picstruct **pffield,
         {
         free(cdscan);
         if (cdwfield)
+          {
           free(cdwscan);
+          if (PLISTEXIST(wflag))
+            free(cdwscanp);
+          }
         }
-      cdwscan = cdscan = dumscan;
+      cdwscan = cdwscanp = cdscan = dumscan;
       }
     else
       {
@@ -215,9 +227,14 @@ void	scanimage(picstruct *field, picstruct *dfield, picstruct **pffield,
 		: &ffield->fstrip[ffield->stripy*ffield->width];
           }
       if (wfield)
+        {
+/*------ Copy the previous weight line to track bad pixel limits */
         wscan = (wfield->stripy==wfield->stripysclim)?
 		  (PIXTYPE *)loadstrip(wfield, (picstruct *)NULL)
 		: &wfield->strip[wfield->stripy*wfield->width];
+        if (yl && PLISTEXIST(wflag))
+          wscanp = &wfield->strip[((yl-1)%wfield->stripheight)*wfield->width];
+        }
       else
         wscan = NULL;
       scan = (field->stripy==field->stripysclim)?
@@ -237,6 +254,9 @@ void	scanimage(picstruct *field, picstruct *dfield, picstruct **pffield,
       else
         dscan = scan;
 
+      if (PLISTEXIST(wflag) && cdwfield)
+/*------ Copy the previous filtered weight line to track bad pixel limits */
+        memcpy(cdwscanp, cdwscan, wfield->width*sizeof(PIXTYPE));
       if (prefs.filter_flag)
         {
         filter(cfield, cdscan);
@@ -324,6 +344,32 @@ void	scanimage(picstruct *field, picstruct *dfield, picstruct **pffield,
         if (PLISTEXIST(flag))
           for (i=0; i<nffield; i++)
             PLISTFLAG(pixt, flag[i]) = pfscan[i][xl];
+        if (PLISTEXIST(wflag) && wscan)
+          {
+	  PLISTFLAG(pixt, wflag) = 0;
+          if (xl>0)
+            {
+            if (wscan[xl-1] >= BIG)
+              PLISTFLAG(pixt, wflag) |= OBJ_WEIGHTZERO;
+            if (cdwscan[xl-1] >= BIG)
+              PLISTFLAG(pixt, wflag) = OBJ_DWEIGHTZERO;
+            }
+	  PLISTFLAG(pixt, wflag) = 0;
+          if (xl<w-1)
+            {
+            if (wscan[xl+1] >= BIG)
+              PLISTFLAG(pixt, wflag) |= OBJ_WEIGHTZERO;
+            if (cdwscan[xl+1] >= BIG)
+              PLISTFLAG(pixt, wflag) = OBJ_DWEIGHTZERO;
+            }
+          if (yl>0)
+            {
+            if (wscanp[xl] >= BIG)
+              PLISTFLAG(pixt, wflag) |= OBJ_WEIGHTZERO;
+            if (cdwscanp[xl] >= BIG)
+              PLISTFLAG(pixt, wflag) = OBJ_DWEIGHTZERO;
+            }
+          }
         if (PLISTEXIST(dthresh))
           PLISTPIX(pixt, dthresh) = thresh;
         if (PLISTEXIST(var))
@@ -399,7 +445,10 @@ void	scanimage(picstruct *field, picstruct *dfield, picstruct **pffield,
             if (start[co] == UNKNOWN)
               {
               if ((int)info[co].pixnb >= prefs.ext_minarea)
-                sortit(field, dfield, wfield, cdwfield, &info[co], &objlist);
+                {
+                sortit(field, dfield, wfield, cdwfield, &info[co], &objlist,
+		       cdwscan, wscan);
+                }
 /* ------------------------------------ free the chain-list */
 
               PLIST(pixel+info[co].lastpix, nextpix) = freeinfo.firstpix;
@@ -565,7 +614,6 @@ void	scanimage(picstruct *field, picstruct *dfield, picstruct **pffield,
   endclean();
 
 /*Free memory */
-
   freeparcelout();
   free(pixel); pixel = NULL;
   lutzfree();
@@ -611,7 +659,8 @@ void  update(infostruct *infoptr1, infostruct *infoptr2, pliststruct *pixel)
 build the object structure.
 */
 void  sortit(picstruct *field, picstruct *dfield, picstruct *wfield,
-	picstruct *dwfield, infostruct *info, objliststruct *objlist)
+	picstruct *dwfield, infostruct *info, objliststruct *objlist,
+	     PIXTYPE *cdwscan, PIXTYPE *wscan)
 
   {
    picstruct		*cfield;

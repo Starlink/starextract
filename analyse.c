@@ -10,16 +10,14 @@
 *
 *	Contents:	analyse(), endobject()...: measurements on detections.
 *
-*	Last modify:	24/09/2001
-*	Last modify:	09/02/00: (PWD)
+*	Last modify:	12/01/2006
+*
+*       History:
+*	                09/02/00: (PWD)
 *                         Added test for BIG (i.e. missing or BAD)
 *                         values in measurement image that do not
 *                         correspond to such values in the detection
 *                         image (leading to numeric errors on Alphas).
-*	Last modify:	16/12/2002
-*                       (EB): 2.3
-*	Last modify:	28/11/2003
-*	Last modify:	27/09/2005
 *
 *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
@@ -48,6 +46,7 @@
 #include	"photom.h"
 #include	"psf.h"
 #include	"retina.h"
+#include	"som.h"
 #include	"winpos.h"
 #include        "userradii.h"
 #include        "adam_defs.h"
@@ -558,7 +557,6 @@ void	endobject(picstruct *field, picstruct *dfield, picstruct *wfield,
 
     if (FLAG(obj2.sprob))
       {
-       int	j;
        double	fac2, input[10], output, fwhm;
 
       fwhm = prefs.seeing_fwhm;
@@ -613,6 +611,29 @@ void	endobject(picstruct *field, picstruct *dfield, picstruct *wfield,
       }
     obj->number = newnumber;
 
+/*-- SOM fitting */
+    if (prefs.somfit_flag)
+      {
+       float    *input;
+
+      input = thesom->input;
+      copyimage(field,input,thesom->inputsize[0],thesom->inputsize[1],ix,iy);
+
+      if (thesom->nextrainput)
+        {
+        input += thesom->ninput-thesom->nextrainput;
+        *(input) = (obj->mx+1)/field->width;
+        *(input+1) = (obj->my+1)/field->height;
+        }
+
+      som_phot(thesom, obj->bkg, field->backsig,
+        (float)prefs.gain, obj->mx-ix, obj->my-iy,
+        FLAG(obj2.vector_somfit)?outobj2.vector_somfit:NULL, -1.0);
+      obj2->stderr_somfit = thesom->stderror;
+      obj2->flux_somfit = thesom->amp;
+      outobj2.fluxerr_somfit = thesom->sigamp;
+      }
+
     if (FLAG(obj2.vignet))
       copyimage(field,outobj2.vignet,prefs.vignetsize[0],prefs.vignetsize[1],
 	ix,iy);
@@ -628,6 +649,9 @@ void	endobject(picstruct *field, picstruct *dfield, picstruct *wfield,
     nsub = 1;
     if (prefs.psf_flag)
       {
+      if (prefs.dpsf_flag)
+        double_psf_fit(ppsf, field, wfield, obj, thepsf, dfield, dwfield);
+      else
       psf_fit(thepsf, field, wfield, obj);
       obj2->npsf = thepsfit->npsf;
       if (prefs.psfdisplay_type == PSFDISPLAY_SPLIT)
@@ -645,6 +669,11 @@ void	endobject(picstruct *field, picstruct *dfield, picstruct *wfield,
             obj2->y_psf[j] = thepsfit->y[j];
           if (FLAG(obj2.flux_psf) && j<prefs.psf_fluxsize)
             obj2->flux_psf[j] = thepsfit->flux[j];
+          if (FLAG(obj2.magerr_psf) && j<prefs.psf_magerrsize)
+            obj2->magerr_psf[j] = obj2->fluxerr_psf[j]>0.0?
+		1.086*obj2->fluxerr_psf[j]/thepsfit->flux[j] : 99.0;
+          if (FLAG(obj2.fluxerr_psf) && j<prefs.psf_fluxerrsize)
+            obj2->fluxerr_psf[j] = obj2->fluxerr_psf[j];     
           if (FLAG(obj2.mag_psf) && j<prefs.psf_magsize)
             obj2->mag_psf[j] = thepsfit->flux[j]>0.0?
 		prefs.mag_zeropoint -2.5*log10(thepsfit->flux[j]) : 99.0;
@@ -670,10 +699,16 @@ void	endobject(picstruct *field, picstruct *dfield, picstruct *wfield,
         if (FLAG(obj2.y_psf))
           obj2->y_psf[0] = thepsfit->y[j];
         if (FLAG(obj2.flux_psf))
-          obj2->flux_psf[0] = thepsfit->flux[j];
+          obj2->flux_psf[0] = thepsfit->flux[j]>0.0? thepsfit->flux[j]:0.0; /*?*/
         if (FLAG(obj2.mag_psf))
           obj2->mag_psf[0] = thepsfit->flux[j]>0.0?
 		prefs.mag_zeropoint -2.5*log10(thepsfit->flux[j]) : 99.0;
+        if (FLAG(obj2.magerr_psf))
+          obj2->magerr_psf[0]=
+		(thepsfit->flux[j]>0.0 && obj2->fluxerr_psf[j]>0.0) ? /*?*/
+			1.086*obj2->fluxerr_psf[j]/thepsfit->flux[j] : 99.0;
+        if (FLAG(obj2.fluxerr_psf))
+          obj2->fluxerr_psf[0]= obj2->fluxerr_psf[j];
         if (j)
           obj->number = ++thecat.ntotal;
         }

@@ -9,16 +9,17 @@
 *
 *	Contents:	Keywords for the configuration file.
 *
-*	Last modify:	24/01/2003
-*                       15/03/2004 (PWD): re-created from old prefs.h file
-*                                   during 2.3 merge:
-*                           - 27/11/98 (PWD):
+*	Last modify:	14/07/2006
+*
+*       History:
+*                       15/03/2004 (PWD): 
+*                             Re-created from old prefs.h file during 2.3 
+*                             merge.
+*                       27/11/98 (PWD):
 *                             Removed ".fits" as default output file
 *                             extension.
-*                           - 15/02/00 (PWD):
+*                       15/02/00 (PWD):
 *                             Added RAD_TYPE, RAD_THRESH.
-*	Last modify:	18/07/2005
-*       Last modify:    19/10/2005
 *
 *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
@@ -26,10 +27,20 @@
 
 #include "key.h"
 
-/*-------------------------------- initialization ---------------------------*/
-int	idummy;
+#ifndef _XML_H_
+#include "xml.h"
+#endif
 
-pkeystruct key[] =
+#ifdef  USE_THREADS
+#define THREADS_PREFMAX THREADS_NMAX
+#else
+#define THREADS_PREFMAX 65535
+#endif
+
+/*-------------------------------- initialization ---------------------------*/
+ int	idummy;
+
+ pkeystruct key[] =
  {
   {"ANALYSIS_THRESH", P_FLOATLIST, prefs.thresh, 0,0, -BIG, BIG,
     {""}, 1, 2, &prefs.nthresh},
@@ -59,8 +70,8 @@ pkeystruct key[] =
    {""}, 1, 2, &prefs.nback_val},
   {"CATALOG_NAME", P_STRING, prefs.cat_name},
   {"CATALOG_TYPE", P_KEY, &prefs.cat_type, 0,0, 0.0,0.0,
-   {"NONE", "ASCII","ASCII_HEAD", "ASCII_SKYCAT", "FITS_LDAC", "FITS_TPX",
-	"FITS_1.0",""}},
+   {"NONE", "ASCII","ASCII_HEAD", "ASCII_SKYCAT", "ASCII_VOTABLE",
+	"FITS_LDAC", "FITS_TPX", "FITS_1.0",""}},
   {"CHECKIMAGE_NAME", P_STRINGLIST, prefs.check_name, 0,0,0.0,0.0,
     {""}, 0, MAXCHECK, &prefs.ncheck_name},
   {"CHECKIMAGE_TYPE", P_KEYLIST, prefs.check_type, 0,0, 0.0,0.0,
@@ -98,12 +109,12 @@ pkeystruct key[] =
    {"NONE","VAR_ONLY","ALL",""}, 1, 2, &prefs.ninterp_type},
   {"MAG_GAMMA", P_FLOAT, &prefs.mag_gamma, 0,0, 1e-10,1e+30},
   {"MAG_ZEROPOINT", P_FLOAT, &prefs.mag_zeropoint, 0,0, -100.0, 100.0},
-  {"MAMA_CORFLEX", P_FLOAT, &prefs.mama_corflex, 0,0, -1.0,1.0},
   {"MASK_TYPE", P_KEY, &prefs.mask_type, 0,0, 0.0,0.0,
    {"NONE","BLANK","CORRECT",""}},
   {"MEMORY_BUFSIZE", P_INT, &prefs.mem_bufsize, 8, 65534},
   {"MEMORY_OBJSTACK", P_INT, &prefs.clean_stacksize, 16,65536},
   {"MEMORY_PIXSTACK", P_INT, &prefs.mem_pixstack, 1000, 10000000},
+  {"NTHREADS", P_INT, &prefs.nthreads, 0, THREADS_PREFMAX},
   {"RAD_THRESH", P_FLOATLIST, prefs.rad, 0,0, -BIG, BIG,
    {""}, 0, 3, &prefs.nrad, 1},
   {"RAD_TYPE", P_KEY, &prefs.rad_type, 0, 0, 0.0, 0.0,
@@ -120,7 +131,8 @@ pkeystruct key[] =
   {"PHOT_PETROPARAMS", P_FLOATLIST, prefs.petroparam, 0,0, 0.0,10.0,
    {""}, 2,2, &prefs.npetroparam},
   {"PIXEL_SCALE", P_FLOAT, &prefs.pixel_scale, 0,0, 0.0, 1e+10},
-  {"PSF_NAME", P_STRING, prefs.psf_name},
+  {"PSF_NAME", P_STRINGLIST, prefs.psf_name, 0,0, 0.0,0.0,
+   {""}, 1, 2, &prefs.npsf_name},	/*?*/
   {"PSF_NMAX", P_INT, &prefs.psf_npsfmax, 1, PSF_NPSFMAX},
   {"PSFDISPLAY_TYPE", P_KEY, &prefs.psfdisplay_type, 0,0, 0.0,0.0,
    {"SPLIT","VECTOR",""}},
@@ -141,6 +153,9 @@ pkeystruct key[] =
   {"WEIGHT_TYPE", P_KEYLIST, prefs.weight_type, 0,0, 0.0,0.0,
    {"NONE","BACKGROUND", "MAP_RMS", "MAP_VAR","MAP_WEIGHT", ""},
    0, MAXIMAGE, &prefs.nweight_type},
+  {"WRITE_XML", P_BOOL, &prefs.xml_flag},
+  {"XML_NAME", P_STRING, prefs.xml_name},
+  {"XSL_URL", P_STRING, prefs.xsl_name},
   {""}
  };
 
@@ -156,21 +171,20 @@ char *default_prefs[] =
 "#-------------------------------- Catalog ------------------------------------",
 " ",
 "CATALOG_NAME     test.cat       # name of the output catalog",
-"CATALOG_TYPE     ASCII_HEAD     # \"NONE\",\"ASCII_HEAD\",\"ASCII\",\"FITS_1.0\"",
-"                                # \"FITS_LDAC\" or \"FITS_TPX\"",
-" ",
+"CATALOG_TYPE     ASCII_HEAD     # NONE,ASCII,ASCII_HEAD, ASCII_SKYCAT,",
+"                                # ASCII_VOTABLE, FITS_1.0 or FITS_LDAC",
 "PARAMETERS_NAME  default.param  # name of the file containing catalog contents",
 " ",
 "#------------------------------- Extraction ----------------------------------",
 " ",
-"DETECT_TYPE      CCD            # \"CCD\" or \"PHOTO\"",
+"DETECT_TYPE      CCD            # CCD (linear) or PHOTO (with gamma correction)",
 "DETECT_MINAREA   5              # minimum number of pixels above threshold",
-"*THRESH_TYPE      RELATIVE       # threshold type: \"RELATIVE\" (in sigmas)",
-"*                                # or \"ABSOLUTE\" (in ADUs)",
+"*THRESH_TYPE      RELATIVE       # threshold type: RELATIVE (in sigmas)",
+"*                                # or ABSOLUTE (in ADUs)",
 "DETECT_THRESH    1.5            # <sigmas> or <threshold>,<ZP> in mag.arcsec-2",
 "ANALYSIS_THRESH  1.5            # <sigmas> or <threshold>,<ZP> in mag.arcsec-2",
 " ",
-"FILTER           Y              # apply filter for detection (\"Y\" or \"N\")?",
+"FILTER           Y              # apply filter for detection (Y or N)?",
 "FILTER_NAME      default.conv   # name of the file containing the filter",
 "*FILTER_THRESH                   # Threshold[s] for retina filtering",
 
@@ -182,21 +196,21 @@ char *default_prefs[] =
 "CLEAN_PARAM      1.0            # Cleaning efficiency",
 " ",
 "MASK_TYPE        CORRECT        # type of detection MASKing: can be one of",
-"                                # \"NONE\", \"BLANK\" or \"CORRECT\"",
+"                                # NONE, BLANK or CORRECT",
 " ",
 "*#-------------------------------- WEIGHTing ----------------------------------",
 "*",
-"*WEIGHT_TYPE      NONE           # type of WEIGHTing: \"NONE\", \"BACKGROUND\",",
-"*                                # \"MAP_RMS\", \"MAP_VAR\" or \"MAP_WEIGHT\"",
-"*WEIGHT_IMAGE     weight         # weight-map filename",
+"*WEIGHT_TYPE      NONE           # type of WEIGHTing: NONE, BACKGROUND,",
+"*                                # MAP_RMS, MAP_VAR or MAP_WEIGHT",
+"*WEIGHT_IMAGE     weight.fits    # weight-map filename",
 "*WEIGHT_GAIN      Y              # modulate gain (E/ADU) with weights? (Y/N)",
 "*WEIGHT_THRESH                   # weight threshold[s] for bad pixels",
 "*",
 "*#-------------------------------- FLAGging -----------------------------------",
 "*",
-"*FLAG_IMAGE       flag           # filename for an input FLAG-image",
-"*FLAG_TYPE        OR             # flag pixel combination: \"OR\", \"AND\",",
-"*                                # \"MIN\", \"MAX\", \"MOST\"",
+"*FLAG_IMAGE       flag.fits      # filename for an input FLAG-image",
+"*FLAG_TYPE        OR             # flag pixel combination: OR, AND, MIN, MAX",
+"*                                # or MOST",
 "*",
 "#------------------------------ Photometry -----------------------------------",
 " ",
@@ -222,23 +236,23 @@ char *default_prefs[] =
 " ",
 "#------------------------------ Background -----------------------------------",
 " ",
-"*BACK_TYPE        AUTO           # \"AUTO\" or \"MANUAL\"",
+"*BACK_TYPE        AUTO           # AUTO or MANUAL",
 "*BACK_VALUE       0.0            # Default background value in MANUAL mode",
 "BACK_SIZE        64             # Background mesh: <size> or <width>,<height>",
 "BACK_FILTERSIZE  3              # Background filter: <size> or <width>,<height>",
 " ",
-"BACKPHOTO_TYPE   GLOBAL         # can be \"GLOBAL\" or \"LOCAL\"",
+"BACKPHOTO_TYPE   GLOBAL         # can be GLOBAL or LOCAL",
 "*BACKPHOTO_THICK 24              # thickness of the background LOCAL annulus",
 "*BACK_FILTTHRESH  0.0            # Threshold above which the background-",
 "*                                # map filter operates",
 " ",
 "#------------------------------ Check Image ----------------------------------",
 " ",
-"CHECKIMAGE_TYPE  NONE           # can be one of \"NONE\", \"BACKGROUND\",",
-"                                # \"MINIBACKGROUND\", \"-BACKGROUND\", \"OBJECTS\",",
-"                                # \"-OBJECTS\", \"SEGMENTATION\", \"APERTURES\",",
-"                                # or \"FILTERED\"",
-"CHECKIMAGE_NAME  check          # Filename for the check-image",
+"CHECKIMAGE_TYPE  NONE           # can be NONE, BACKGROUND, BACKGROUND_RMS,",
+"                                # MINIBACKGROUND, MINIBACK_RMS, -BACKGROUND,",
+"                                # FILTERED, OBJECTS, -OBJECTS, SEGMENTATION,",
+"                                # or APERTURES",
+"CHECKIMAGE_NAME  check.fits     # Filename for the check-image",
 " ",
 "#--------------------- Memory (change with caution!) -------------------------",
 " ",
@@ -252,27 +266,36 @@ char *default_prefs[] =
 "*ASSOC_DATA       2,3,4          # columns of the data to replicate (0=all)",
 "*ASSOC_PARAMS     2,3,4          # columns of xpos,ypos[,mag]",
 "*ASSOC_RADIUS     2.0            # cross-matching radius (pixels)",
-"*ASSOC_TYPE       MAG_SUM        # ASSOCiation method: \"FIRST\", \"NEAREST\",",
-"*                                # \"MEAN\", \"MAG_MEAN\", \"SUM\", \"MAG_SUM\",",
-"*                                #\"MIN\" or \"MAX\"",
-"*ASSOCSELEC_TYPE  MATCHED        # ASSOC selection type: \"ALL\", \"MATCHED\"",
-"*                                # or \"-MATCHED\"",
+"*ASSOC_TYPE       MAG_SUM        # ASSOCiation method: FIRST, NEAREST, MEAN,",
+"*                                # MAG_MEAN, SUM, MAG_SUM, MIN or MAX",
+"*ASSOCSELEC_TYPE  MATCHED        # ASSOC selection type: ALL, MATCHED or -MATCHED",
 "*",
 "#----------------------------- Miscellaneous ---------------------------------",
 " ",
-"VERBOSE_TYPE     NORMAL         # can be \"QUIET\", \"NORMAL\" or \"FULL\"",
+"VERBOSE_TYPE     NORMAL         # can be QUIET, NORMAL or FULL",
+"WRITE_XML        N              # Write XML file (Y/N)?",
+"XML_NAME         sex.xml        # Filename for XML output",
+"*XSL_URL          " XSL_URL,
+"*                                # Filename for XSL style-sheet",
+#ifdef USE_THREADS
+"*NTHREADS         0              # Number of simultaneous threads for",
+"*                                # the SMP version of " BANNER,
+"*                                # 0 = automatic",
+#else
+"*NTHREADS         1              # 1 single thread",
+#endif
 "*",
-"*#----------------------------------- Other -----------------------------------",
+"*FITS_UNSIGNED    N              # Treat FITS integer values as unsigned (Y/N)?",
+"*INTERP_MAXXLAG   16             # Max. lag along X for 0-weight interpolation",
+"*INTERP_MAXYLAG   16             # Max. lag along Y for 0-weight interpolation",
+"*INTERP_TYPE      ALL            # Interpolation type: NONE, VAR_ONLY or ALL",
 "*",
-"*FITS_UNSIGNED        N",
-"*INTERP_MAXXLAG       16",
-"*INTERP_MAXYLAG       16",
-"*INTERP_TYPE          ALL",
-"*MAMA_CORFLEX         3.3e-5",
-"*PSF_NAME             default.psf",
-"*PSF_NMAX             11",
-"*PSFDISPLAY_TYPE      SPLIT",
-"*SOM_NAME             default.som",
+"*#--------------------------- Experimental Stuff -----------------------------",
+"*",
+"*PSF_NAME         default.psf    # File containing the PSF model",
+"*PSF_NMAX         9              # Max.number of PSFs fitted simultaneously",
+"*PSFDISPLAY_TYPE  SPLIT          # Catalog type for PSF-fitting: SPLIT or VECTOR",
+"*SOM_NAME         default.som    # File containing Self-Organizing Map weights",
 ""
  };
 

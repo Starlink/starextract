@@ -9,12 +9,11 @@
 *
 *	Contents:	main program.
 *
-*	Last modify:	10/09/99
-*	Last modify:	13/07/98
+*	Last modify:	14/07/2006
+*
+*       History:
 *                       28/10/98 (AJC)
 *                          Use AFPRINTF not fprintf
-*	Last modify:	16/12/2002
-*	Last modify:	26/11/2003
 *
 *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
@@ -43,7 +42,11 @@
 #include	"psf.h"
 #include	"som.h"
 #include	"weight.h"
+#include	"xml.h"
+
 #include        "adam_defs.h"
+
+time_t	thetimet, thetimet2;
 
 /******************************** makeit *************************************/
 /*
@@ -55,9 +58,28 @@ void	makeit()
    checkstruct		*check;
    picstruct		*dfield, *field,*pffield[MAXFLAG], *wfield,*dwfield;
    static time_t        thetime1, thetime2;
-   int			i, nok, next = 0;
+   struct tm		*tm;
+   int			i, nok, next;
 
-   nok = 1;
+   next = 0;
+   nok = 1
+
+/* Processing start date and time */
+  thetimet = time(NULL);
+  tm = localtime(&thetimet);
+  sprintf(prefs.sdate_start,"%04d-%02d-%02d",
+        tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday);
+  sprintf(prefs.stime_start,"%02d:%02d:%02d",
+        tm->tm_hour, tm->tm_min, tm->tm_sec);
+
+  NFPRINTF(OUTPUT, "");
+  QPRINTF(OUTPUT, "----- %s %s started on %s at %s with %d thread%s\n\n",
+		BANNER,
+		MYVERSION,
+		prefs.sdate_start,
+		prefs.stime_start,
+		prefs.nthreads,
+		prefs.nthreads>1? "s":"");
 
 /* Initialize globals variables */
   initglob();
@@ -69,7 +91,9 @@ void	makeit()
   if (prefs.psf_flag)
     {
     NFPRINTF(OUTPUT, "Reading PSF information");
-    thepsf = psf_load(prefs.psf_name); 
+    thepsf = psf_load(prefs.psf_name[0]); 
+    if (prefs.dpsf_flag)
+      ppsf = psf_load(prefs.psf_name[1]);
  /*-- Need to check things up because of PSF context parameters */
     updateparamflags();
     useprefs();
@@ -129,6 +153,10 @@ void	makeit()
   NFPRINTF(OUTPUT, "Initializing catalog");
   initcat();
   
+/* Initialize XML data */
+  if (prefs.xml_flag || prefs.cat_type==ASCII_VO)
+    init_xml(next);
+
 /* Go through all images */
 /* for all images in an MEF */
 
@@ -279,6 +307,11 @@ void	makeit()
   {
       psf_readcontext(thepsf, field);
       psf_init(thepsf);
+      if (prefs.dpsf_flag)
+        {
+        psf_readcontext(thepsf, dfield);
+        psf_init(thepsf); /*?*/
+        }
   }
 
 /*-- Copy field structures to static ones (for catalog info) */
@@ -325,6 +358,12 @@ void	makeit()
 
   reendcat();
 
+/* Update XML data */
+  if (prefs.xml_flag || prefs.cat_type==ASCII_VO)
+    update_xml(&thecat, dfield? dfield:field, field,
+	dwfield? dwfield:wfield, wfield);
+
+
 /*-- Close ASSOC routines */
   end_assoc(field);
 
@@ -338,7 +377,7 @@ void	makeit()
   if (dwfield)
       endfield(dwfield);
 
-  QPRINTF(OUTPUT, "Objects: detected %-8d / sextracted %-8d\n",
+    QPRINTF(OUTPUT, "Objects: detected %-8d / sextracted %-8d               \n",
           thecat.ndetect, thecat.ntotal);
 /* End look around all images in an MEF */
 
@@ -369,11 +408,33 @@ void	makeit()
     endgrowth();
 
   if (prefs.psf_flag)
-    psf_end(thepsf);
+    psf_end(thepsf,thepsfit); /*?*/
+
+  if (prefs.dpsf_flag)
+    psf_end(ppsf,ppsfit);
 
   if (FLAG(obj2.sprob))
     neurclose();
 
+/* Processing end date and time */
+  thetimet2 = time(NULL);
+  tm = localtime(&thetimet2);
+  sprintf(prefs.sdate_end,"%04d-%02d-%02d",
+	tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday);
+  sprintf(prefs.stime_end,"%02d:%02d:%02d",
+	tm->tm_hour, tm->tm_min, tm->tm_sec);
+  prefs.time_diff = difftime(thetimet2, thetimet);
+
+/* Write XML */
+  if (prefs.xml_flag)
+    write_xml(prefs.xml_name);
+
+  endcat((char *)NULL);
+
+  if (prefs.xml_flag || prefs.cat_type==ASCII_VO)
+    end_xml();
+
+  return;
   }
 
 
@@ -394,13 +455,3 @@ void	initglob()
 
   return;
   }
-
-/*
-int matherr(struct exception *x)
-{
-printf("***MATH ERROR***: %d %s %f %f\n",
-x->type, x->name, x->arg1, x->retval);
-return (0);
-}
-
-*/
