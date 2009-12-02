@@ -1,31 +1,31 @@
 /*+
  *  Name:
  *     EXTRACTOR
- 
+
  *  Purpose:
  *     Detects and parameterises objects on an image.
- 
+
  *  Language:
  *     ANSI C
- 
+
  *  Type of Module:
  *     ADAM A-task
- 
+
  *  Invocation:
  *     extractor( status )
- 
+
  *  Arguments:
  *     STATUS = INTEGER (Given and Returned)
  *        The global status.
- 
+
  *  Description:
  *     This program is a version of the SExtractor program written by
  *     Emmanual Bertin, that reads NDF format (and NDF supported
- *     foreign data formats) images. 
- 
+ *     foreign data formats) images.
+
  *  Usage:
  *     extractor image config
- 
+
  *  ADAM Parameters:
  *     CONFIG = LITERAL (Read)
  *        The name of the file that contains the many program
@@ -45,7 +45,7 @@
  *        will continue to use the system-wide defaults).
  *
  *        Quick-look modifications of parameters can be made using the
- *        KEYWORDS and NAME/VALUE parameters. 
+ *        KEYWORDS and NAME/VALUE parameters.
  *
  *        [$EXTRACTOR_DIR/config/default.sex]
  *     IMAGE = LITERAL (Read)
@@ -53,14 +53,14 @@
  *        detected and parameterised. If you have initialised the
  *        CONVERT package (see SUN/55) then you may process foreign
  *        formats, such as FITS and IRAF.
- *        
+ *
  *        Using this parameter you actually give two image files. The
  *        first image will be used for detection and parameterising
  *        and the second will be used to actually measure the data
  *        values. Using this method allows you to measure the same
- *        objects many images, or two use a high signal to noise image 
+ *        objects many images, or two use a high signal to noise image
  *        to determine the measurement regions on a low signal to noise
- *        image 
+ *        image
  *        [global_data_file]
  *     KEYWORDS = _LOGICAL (Read)
  *        Whether you want to enter a series of parameter names and
@@ -75,28 +75,28 @@
  *        have no more to enter.
  *        [!]
  *     VALUE = LITERAL (Read)
- *        The value of the parameter you have just specified using the 
+ *        The value of the parameter you have just specified using the
  *        NAME prompt.
  *        [!]
- 
+
  *  Examples:
  *     {routine_example_text}
  *        {routine_example_description}
  *     [routine_example]...
- 
+
  *  Notes:
  *     - Read the SExtractor documentation for the meaning of the
  *     parameters that you can enter in the default.sex and
- *     default.param files. 
- 
+ *     default.param files.
+
  *  Implementation deficiencies:
  *     - uses setjmp/longjmp to work around program error flow
  *       problems. This may leave open files and unfreed memory
- *       allocations. 
- 
+ *       allocations.
+
  *  References:
  *     -  MUD/165, SExtractor User's Guide (v2.0).
- 
+
  *  Copyright:
  *     Copyright (C) 1998 Central Laboratory of the Research Councils
 
@@ -116,24 +116,24 @@
  *     10-MAR-2004 (PWD):
  *        Increased size of filename buffers from 20 to 256.
  *     25-JAN-2006 (PWD):
- *        Change NDF slice handling so that it works for higher dimensions. 
+ *        Change NDF slice handling so that it works for higher dimensions.
  *        Previously only worked for 2D images (by chance).
  *     23-AUG-2006 (BC):
  *        Replace C++-style comments with C-style.
  *     15-JUL-2008 (TIMJ):
  *        Tweak NDG API to use size_t
  *     {enter_changes_here}
- 
+
  *  Bugs:
  *     {note_any_bugs_here}
 
  */
 
   /* Include files: */
-#include	<ctype.h>
-#include	<stdio.h>
-#include	<stdlib.h>
-#include	<string.h>
+#include        <ctype.h>
+#include        <stdio.h>
+#include        <stdlib.h>
+#include        <string.h>
 #include        <setjmp.h>
 
 
@@ -141,8 +141,8 @@
 #include        "config.h"
 #endif
 
-#include	"define.h"
-#include	"globals.h"
+#include        "define.h"
+#include        "globals.h"
 #include        "sae_par.h"
 #include        "par.h"
 #include        "ndf.h"
@@ -175,36 +175,37 @@ void real_extractor( int *status ) {
     int flag;                /*  Status of NDFs returned */
 
     if ( setjmp( env ) == 0 ) {
-        
+
         /* Run program. */
-        
+
         /* Default parameters */
         memset( &prefs, '\0', sizeof(prefstruct) );
         prefs.nimage_name = 1;
         prefs.image_name[0] = "image";
-        
+
         /* See if any KEYWORDS to be specified as parameters */
         parGet0l( "KEYWORDS", &keywords, status );
-        
+
         /*   keywords = 0;*/
         if ( keywords ) {
-            
-            /*  KEYWORDS to be given - 
+
+            /*  KEYWORDS to be given -
              *   set pointers to names in argkey
              *   and pointers to value strings in argval
              *   Use argstr as temporary buffer
              */
             argkey[0] = argstr;
             for ( narg=0; (*status == SAI__OK) && (narg < MAXARGS); narg++ ) {
-                
+
                 /*     Get KEYWORD name */
                 parGet0c( "NAME", argkey[narg], VALUELEN, status );
                 argval[narg] = argkey[narg] + strlen(argkey[narg]) + 1;
-                
+
                 /*     Get value */
                 parGet0c( "VALUE", argval[narg], VALUELEN, status );
-                argkey[narg+1] = argval[narg] + strlen(argval[narg]) + 1;
-                
+                if ( *status != PAR__NULL ) {
+                    argkey[narg+1] = argval[narg] + strlen(argval[narg]) + 1;
+                }
                 parCancl( "NAME", status );
                 parCancl( "VALUE", status );
             }
@@ -213,7 +214,7 @@ void real_extractor( int *status ) {
         } else {
             narg = 0;
         }
-        
+
         /* Get configuration file name */
         parGet0c( "CONFIG", prefs.prefs_name, VALUELEN, status );
         if ( *status == SAI__OK ) {
@@ -221,7 +222,7 @@ void real_extractor( int *status ) {
              * in the file */
             readprefs( prefs.prefs_name, argkey, argval, narg );
         }
-        
+
         /* and image name(s), obtain these as an NDG group */
         igrp = NULL;
         ndgAssoc( "IMAGE", 0, &igrp, &size, &flag, status );
@@ -231,6 +232,7 @@ void real_extractor( int *status ) {
             /*  Only pick first two images, if more are given. */
             nim = ( size > 1 ) ? 2: 1;
             argval[0] = argstr;
+            argval[1] = argstr + VALUELEN;
             grpGet( igrp, 1, nim, argval, VALUELEN, status );
             prefs.image_name[0] = argval[0];
             if ( nim == 2 ) {
@@ -238,10 +240,10 @@ void real_extractor( int *status ) {
             }
             prefs.nimage_name = nim;
             grpDelet( &igrp, status );
-            
+
             /* Now do the business */
             errStat( status );
-            if ( *status == SAI__OK ) { 
+            if ( *status == SAI__OK ) {
                 ndfBegin();
                 srand( 1 ); /* Needed for repeatable measurements as rand
                                function is used in gatherup */
@@ -255,7 +257,7 @@ void real_extractor( int *status ) {
             }
         }
     } else {
-        /* Return from longjmp in error() -- would be nice to close any open 
+        /* Return from longjmp in error() -- would be nice to close any open
            files at this point.... */
         errStat( status );
     }
