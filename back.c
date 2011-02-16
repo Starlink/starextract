@@ -410,14 +410,20 @@ void	backstat(backstruct *backmesh, backstruct *wbackmesh,
          {
             for (x=bw; x--;)
             {
-               pix = *(buft++);
-               if ((wpix = *(wbuft++)) < wthresh)
-               {
-                  wmean += wpix;
-                  wsigma += wpix*wpix;
-                  mean += pix;
-                  sigma += pix*pix;
-                  ngood++;
+               if ( *buft > -BIG && *wbuft > -BIG ) {
+                  pix = *(buft++);
+                  if ((wpix = *(wbuft++)) < wthresh)
+                  {
+                      wmean += wpix;
+                      wsigma += wpix*wpix;
+                      mean += pix;
+                      sigma += pix*pix;
+                      ngood++;
+                  }
+               }
+               else {
+                  buft++;
+                  wbuft++;
                }
             }
          }
