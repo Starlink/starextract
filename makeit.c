@@ -259,7 +259,6 @@ void	makeit()
   if (prefs.growth_flag)
     initgrowth();
 
-<<<<<<< HEAD
 /*-- Init the CHECK-images */
   if (prefs.check_flag)
   {
