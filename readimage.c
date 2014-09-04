@@ -1,18 +1,31 @@
 /*
- 				readimage.c
-
-*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+*				readimage.c.
 *
-*	Part of:	ADAM SExtractor
+* Read image data.
 *
-*	Author:		A. Chipperfield (Starlink, CCLRC, RAL)
-*                       P.W. Draper (Starlink, Durham University)
-*                       E. Bertin (IAP, Leiden observatory & ESO)
+*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 *
-*	Contents:	functions for input of image data.
+*	This file part of:	SExtractor
 *
-*	Last modify:	13/07/2006
+*	Copyright:		(C) 1993-2012 Emmanuel Bertin -- IAP/CNRS/UPMC
 *
+*	License:		GNU General Public License
+*
+*	SExtractor is free software: you can redistribute it and/or modify
+*	it under the terms of the GNU General Public License as published by
+*	the Free Software Foundation, either version 3 of the License, or
+*	(at your option) any later version.
+*	SExtractor is distributed in the hope that it will be useful,
+*	but WITHOUT ANY WARRANTY; without even the implied warranty of
+*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*	GNU General Public License for more details.
+*	You should have received a copy of the GNU General Public License
+*	along with SExtractor. If not, see <http://www.gnu.org/licenses/>.
+*
+*	Last modified:		26/06/2012
+*
+*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+/*
 *       History:
 *	        	28/10/98 (AJC)
 *                          In line with V2.0.15
@@ -26,8 +39,6 @@
 *                       26/01/2006 (PWD): 
 *                          Changed to handle redundant axes in data and native
 *                          data type of NDF.
-*
-*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
 
 #ifdef HAVE_CONFIG_H
@@ -47,6 +58,7 @@
 #include	"check.h"
 #include	"field.h"
 #include	"fits/fitscat.h"
+#include	"fitswcs.h"
 #include	"interpolate.h"
 #include	"back.h"
 #include	"astrom.h"
@@ -62,10 +74,12 @@ Load a new strip of pixel data into the buffer.
 */
 void	*loadstrip(picstruct *field, picstruct *wfield)
   {
+   tabstruct	*tab;
    checkstruct	*check;
    int		y, w, flags, interpflag;
    PIXTYPE	*data, *wdata, *rmsdata;
 
+  tab = field->tab;
   w = field->width;
   flags = field->flags;
   interpflag = (wfield && wfield->interp_flag);
@@ -96,7 +110,7 @@ void	*loadstrip(picstruct *field, picstruct *wfield)
       else if (flags & INTERP_FIELD)
         copydata(field, 0, nbpix);
       else
-        readdata(field, data, nbpix);
+        read_body(tab, data, nbpix);
       if (flags & (WEIGHT_FIELD|RMS_FIELD|BACKRMS_FIELD|VAR_FIELD))
         weight_to_var(field, data, nbpix);
       if ((flags & MEASURE_FIELD) && (check=prefs.check[CHECK_IDENTICAL]))
@@ -127,6 +141,12 @@ void	*loadstrip(picstruct *field, picstruct *wfield)
               writecheck(check, data, w);
             if ((check = prefs.check[CHECK_SUBPCPROTOS]))
               writecheck(check, data, w);
+            if ((check = prefs.check[CHECK_SUBPROFILES]))
+              writecheck(check, data, w);
+            if ((check = prefs.check[CHECK_SUBSPHEROIDS]))
+              writecheck(check, data, w);
+            if ((check = prefs.check[CHECK_SUBDISKS]))
+              writecheck(check, data, w);
             }
           if ((flags&DETECT_FIELD) && (check=prefs.check[CHECK_BACKRMS]))
             {
@@ -142,7 +162,7 @@ void	*loadstrip(picstruct *field, picstruct *wfield)
 		*sizeof(FLAGTYPE))))
       error(EXIT_FAILURE,"Not enough memory for the flag buffer of ",
 	field->rfilename);
-      readidata(field, field->fstrip, nbpix);
+      read_ibody(field->tab, field->fstrip, nbpix);
       }
 
     field->ymax = field->stripheight;
@@ -161,6 +181,12 @@ void	*loadstrip(picstruct *field, picstruct *wfield)
 
 /*---- copy to Check-image the "oldest" line before it is replaced */
       if ((flags & MEASURE_FIELD) && (check=prefs.check[CHECK_SUBOBJECTS]))
+        writecheck(check, data, w);
+
+      if ((flags & MEASURE_FIELD) && (check=prefs.check[CHECK_MASK]))
+        writecheck(check, data, w);
+
+      if ((flags & MEASURE_FIELD) && (check=prefs.check[CHECK_SUBMASK]))
         writecheck(check, data, w);
 
       if (flags & BACKRMS_FIELD)
@@ -195,6 +221,12 @@ void	*loadstrip(picstruct *field, picstruct *wfield)
             writecheck(check, data, w);
           if ((check = prefs.check[CHECK_SUBPCPROTOS]))
             writecheck(check, data, w);
+          if ((check = prefs.check[CHECK_SUBPROFILES]))
+            writecheck(check, data, w);
+          if ((check = prefs.check[CHECK_SUBSPHEROIDS]))
+            writecheck(check, data, w);
+          if ((check = prefs.check[CHECK_SUBDISKS]))
+            writecheck(check, data, w);
           }
         if ((flags&DETECT_FIELD) && (check=prefs.check[CHECK_BACKRMS]))
           {
@@ -204,7 +236,7 @@ void	*loadstrip(picstruct *field, picstruct *wfield)
         }
       }
     else
-      readidata(field, field->fstrip + field->stripylim*w, w);
+      read_ibody(tab, field->fstrip + field->stripylim*w, w);
 
     field->stripylim = (++field->ymin)%field->stripheight;
     if ((++field->ymax)<field->height)

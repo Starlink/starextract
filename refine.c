@@ -1,14 +1,31 @@
- /*
- 				refine.c
-
-*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+/*
+*				refine.c
 *
-*	Part of:	SExtractor
+* Deblend sources based on their pixel lists.
 *
-*	Author:		E.BERTIN (IAP)
+*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 *
-*	Contents:	functions to refine extraction of objects.
+*	This file part of:	SExtractor
 *
+*	Copyright:		(C) 1993-2010 Emmanuel Bertin -- IAP/CNRS/UPMC
+*
+*	License:		GNU General Public License
+*
+*	SExtractor is free software: you can redistribute it and/or modify
+*	it under the terms of the GNU General Public License as published by
+*	the Free Software Foundation, either version 3 of the License, or
+*	(at your option) any later version.
+*	SExtractor is distributed in the hope that it will be useful,
+*	but WITHOUT ANY WARRANTY; without even the implied warranty of
+*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*	GNU General Public License for more details.
+*	You should have received a copy of the GNU General Public License
+*	along with SExtractor. If not, see <http://www.gnu.org/licenses/>.
+*
+*	Last modified:		11/10/2010
+*
+*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+/*
 *	Last modify:	11/05/99
 *                       02/11/98 (AJC)
 *                         Initialize if necessary
@@ -18,8 +35,6 @@
 *                         changes in this area.
 *	Last modify:	02/04/2003
 *	Last modify:	27/11/2003
-*
-*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
 
 #ifdef HAVE_CONFIG_H
@@ -278,7 +293,7 @@ int	gatherup(objliststruct *objlistin, objliststruct *objlistout)
       goto exit_gatherup;
       }
     dist = objt->fdnpix/(2*PI*objt->abcor*objt->a*objt->b);
-    amp[i] = dist<70.0? objt->thresh*exp(dist) : 4.0*objt->fdpeak;
+    amp[i] = dist<70.0? objt->dthresh*expf(dist) : 4.0*objt->fdpeak;
 
 /* ------------ limitate expansion ! */
     if (amp[i]>4.0*objt->fdpeak)
@@ -313,7 +328,7 @@ int	gatherup(objliststruct *objlistin, objliststruct *objlistout)
         dx = x - objt->mx;
         dy = y - objt->my;
         dist=0.5*(objt->cxx*dx*dx+objt->cyy*dy*dy+objt->cxy*dx*dy)/objt->abcor;
-        p[i] = p[i-1] + (dist<70.0?amp[i]*exp(-dist) : 0.0);
+        p[i] = p[i-1] + (dist<70.0?amp[i]*expf(-dist) : 0.0);
         if (dist<distmin)
           {
           distmin = dist;
@@ -323,7 +338,9 @@ int	gatherup(objliststruct *objlistin, objliststruct *objlistout)
       if (p[nobj-1] > 1.0e-31)
         {
         drand = p[nobj-1]*rand()/RAND_MAX;
-        for (i=1; p[i]<drand; i++);
+        for (i=1; i<nobj && p[i]<drand; i++);
+        if (i==nobj)
+          i=iclst;
 	}
       else
         i = iclst;

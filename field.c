@@ -1,18 +1,32 @@
- /*
- 				field.c
+/*
+*				field.c
+*
+* Handle field (image) structures.
+*
+*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+*
+*	This file part of:	SExtractor
+*
+*	Copyright:		(C) 1993-2012 Emmanuel Bertin -- IAP/CNRS/UPMC
+*
+*	License:		GNU General Public License
+*
+*	SExtractor is free software: you can redistribute it and/or modify
+*	it under the terms of the GNU General Public License as published by
+*	the Free Software Foundation, either version 3 of the License, or
+*	(at your option) any later version.
+*	SExtractor is distributed in the hope that it will be useful,
+*	but WITHOUT ANY WARRANTY; without even the implied warranty of
+*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*	GNU General Public License for more details.
+*	You should have received a copy of the GNU General Public License
+*	along with SExtractor. If not, see <http://www.gnu.org/licenses/>.
+*
+*	Last modified:		12/07/2012
+*
+*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
-*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-*
-*	Part of:	SExtractor
-*
-*	Author:		E.BERTIN (IAP)
-*                       A.J.CHIPPERFIELD (STARLINK)
-*                       P.W.DRAPER (STARLINK & Durham University)
-*
-*	Contents:	Handling of field structures.
-*
-*	Last modify:	29/06/2006
-*
+/*
 *       History:
 *                       27/10/98 (AJC)
 *                          Use AFPRINTF not fprintf
@@ -20,8 +34,6 @@
 *                          Changed use of field->file member. This is
 *                          used differently in NDF interface (was
 *                          being closed!). 
-*
-*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
 
 #ifdef HAVE_CONFIG_H
@@ -42,14 +54,16 @@
 #include	"back.h"
 #include	"field.h"
 #include	"filter.h"
+#include	"fitswcs.h"
+#include	"header.h"
 #include	"interpolate.h"
 #include        "adam_defs.h"
 
 /********************************* newfield **********************************/
 /*
-Returns a pointer to a new field, ready to go!
+Returns a pointer to a new field for extension ext, ready to go!
 */
-picstruct	*newfield(char *filename, int flags, int nok)
+picstruct	*newfield(char *filename, int flags, int ext)
 
   {
    picstruct	*field;
@@ -65,9 +79,18 @@ picstruct	*newfield(char *filename, int flags, int nok)
   else
     field->rfilename++;
 
+/* Create a file name with a "header" extension */
+  strcpy(field->hfilename, filename);
+  if (!(pstr = strrchr(field->hfilename, '.')))
+    pstr = field->hfilename+strlen(field->hfilename);
+  sprintf(pstr, "%s", prefs.head_suffix);
+
   sprintf(gstr, "Looking for %s", field->rfilename);
   NFPRINTF(OUTPUT, gstr);
 /* Check the image exists and read important info (image size, etc...) */
+  field->file = cat->file;
+
+  field->headflag = !read_aschead(field->hfilename, nok, field->tab);
   readimagehead(field);
   QPRINTF(OUTPUT, "%s \"%.20s\" / %d x %d / %d bits %s data\n",
           flags&FLAG_FIELD?   "Flagging  from:" :
@@ -90,6 +113,17 @@ picstruct	*newfield(char *filename, int flags, int nok)
     initastrom(field);
   else
     field->pixscale=prefs.pixel_scale;
+
+/* Gain and Saturation */
+  if (flags & (DETECT_FIELD|MEASURE_FIELD))
+    {
+    if (fitsread(field->tab->headbuf, prefs.gain_key, &field->gain,
+	H_FLOAT, T_DOUBLE) != RETURN_OK)
+      field->gain = prefs.gain;
+    if (fitsread(field->tab->headbuf, prefs.satur_key, &field->satur_level,
+	H_FLOAT, T_DOUBLE) !=RETURN_OK)
+      field->satur_level = prefs.satur_level;
+    }
 
 /* Background */
   if (flags & (DETECT_FIELD|MEASURE_FIELD|WEIGHT_FIELD|VAR_FIELD|RMS_FIELD))
@@ -128,13 +162,13 @@ picstruct	*newfield(char *filename, int flags, int nok)
   if (prefs.filter_flag)
     {
 /*-- If filtering is on, one should consider the height of the conv. mask */
-     int	margin;
-
+/*-- + 1 line for detectinhg zero-weight neighbours */
     if (field->stripheight < thefilter->convh)
       field->stripheight = thefilter->convh;
-    if (field->stripmargin < (margin = (thefilter->convh-1)/2))
+    if (field->stripmargin < (margin = (thefilter->convh-1)/2+1))
       field->stripmargin = margin;
     }
+
   return field;
   }
 
@@ -154,8 +188,8 @@ picstruct	*inheritfield(picstruct *infield, int flags)
 /* Copy what is important and reset the remaining */
   *field = *infield;
   field->flags = flags;
-  copyastrom(infield, field);
-  QMEMCPY(infield->fitshead, field->fitshead, char, infield->fitsheadsize);
+  if (infield->wcs)
+    field->wcs = copy_wcs(infield->wcs);
   field->interp_flag = 0;
   field->assoc = NULL;
   field->strip = NULL;
@@ -179,12 +213,13 @@ void	endfield(picstruct *field)
     /*  if (field->file)
         fclose(field->file);  PWD:  file not opened, using NDF instead*/
 
-  free(field->fitshead);
+/* Free cat only if associated with an open file */
+  if (field->file)
+    free_cat(&field->cat, 1);
   free(field->strip);
   free(field->fstrip);
-  free(field->compress_buf);
-  if (field->astrom)
-    endastrom(field);
+  if (field->wcs)
+    end_wcs(field->wcs);
   if (field->interp_flag)
     end_interpolate(field);
   endback(field);
