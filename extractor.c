@@ -221,6 +221,7 @@ void real_extractor( int *status ) {
             /* And read it, using our NAME, VALUE pairs in preference to those
              * in the file */
             readprefs( prefs.prefs_name, argkey, argval, narg );
+            preprefs();
         }
 
         /* and image name(s), obtain these as an NDG group */
