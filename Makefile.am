@@ -45,6 +45,7 @@ libextractor_a_SOURCES	= adamprint.c userradii.c userradii.h \
 			  plist.c prefs.c $(PROFITSOURCE) psf.c readimage.c \
 			  refine.c retina.c scan.c som.c weight.c winpos.c \
 			  xml.c \
+              wcs/poly.c \
 			  assoc.h astrom.h back.h bpro.h check.h clean.h \
 			  define.h extract.h fft.h field.h filter.h fitswcs.h \
 			  flag.h globals.h growth.h header.h image.h \
@@ -52,7 +53,8 @@ libextractor_a_SOURCES	= adamprint.c userradii.c userradii.h \
 			  pattern.h photom.h plist.h prefs.h preflist.h \
 			  profit.h psf.h retina.h sexhead1.h sexhead.h \
 			  sexheadsc.h som.h threads.h types.h wcscelsys.h \
-			  weight.h winpos.h xml.h
+			  weight.h winpos.h xml.h \
+              wcs/poly.h
 
 libdummy_a_SOURCES      = extractor.c
 
