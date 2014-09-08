@@ -79,34 +79,23 @@ picstruct	*newfield(char *filename, int flags, int ext)
   else
     field->rfilename++;
 
-/* Create a file name with a "header" extension */
-  strcpy(field->hfilename, filename);
-  if (!(pstr = strrchr(field->hfilename, '.')))
-    pstr = field->hfilename+strlen(field->hfilename);
-  sprintf(pstr, "%s", prefs.head_suffix);
-
   sprintf(gstr, "Looking for %s", field->rfilename);
   NFPRINTF(OUTPUT, gstr);
 /* Check the image exists and read important info (image size, etc...) */
-  field->file = cat->file;
-
-  field->headflag = !read_aschead(field->hfilename, nok, field->tab);
   readimagehead(field);
-  QPRINTF(OUTPUT, "%s \"%.20s\" / %d x %d / %d bits %s data\n",
-          flags&FLAG_FIELD?   "Flagging  from:" :
-          (flags&(RMS_FIELD|VAR_FIELD|WEIGHT_FIELD)?
-           "Weighting from:" :
-           (flags&MEASURE_FIELD? "Measuring from:" :
-            "Detecting from:")),
-          field->ident,
-          field->width, field->height, field->bytepix*8,
-          field->bitpix>0?
-          (field->compress_type!=ICOMPRESS_NONE?"COMPRESSED":"INTEGER")
-          :"FLOATING POINT");
 
-/* Provide a buffer for compressed data */
-  if (field->compress_type != ICOMPRESS_NONE)
-    QMALLOC(field->compress_buf, char, FBSIZE);
+  QPRINTF(OUTPUT, "----- %s %s%s\n",
+        flags&FLAG_FIELD?   "Flagging  from:" :
+       (flags&(RMS_FIELD|VAR_FIELD|WEIGHT_FIELD)?
+                             "Weighting from:" :
+       (flags&MEASURE_FIELD? "Measuring from:" :
+                             "Detecting from:")),
+        field->rfilename,
+        gstr );
+  QPRINTF(OUTPUT, "      \"%.20s\" / %s / %dx%d / %d bits\n",
+        field->ident,
+        field->headflag? "EXT. HEADER" : "no ext. header",
+          field->width, field->height, field->bytepix*8 );
 
 /* Check the astrometric system and do the setup of the astrometric stuff */
   if (prefs.world_flag && (flags & (MEASURE_FIELD|DETECT_FIELD)))
@@ -115,6 +104,7 @@ picstruct	*newfield(char *filename, int flags, int ext)
     field->pixscale=prefs.pixel_scale;
 
 /* Gain and Saturation */
+/* XXX Need NDF FITS header access.
   if (flags & (DETECT_FIELD|MEASURE_FIELD))
     {
     if (fitsread(field->tab->headbuf, prefs.gain_key, &field->gain,
@@ -124,6 +114,7 @@ picstruct	*newfield(char *filename, int flags, int ext)
 	H_FLOAT, T_DOUBLE) !=RETURN_OK)
       field->satur_level = prefs.satur_level;
     }
+*/
 
 /* Background */
   if (flags & (DETECT_FIELD|MEASURE_FIELD|WEIGHT_FIELD|VAR_FIELD|RMS_FIELD))
@@ -195,8 +186,6 @@ picstruct	*inheritfield(picstruct *infield, int flags)
   field->strip = NULL;
   field->fstrip = NULL;
   field->reffield = infield;
-  field->compress_buf = NULL;
-  field->compress_type = ICOMPRESS_NONE;
   field->file = 0;            /*  PWD: was NULL, file reused as position;*/
 
   return field;
@@ -210,12 +199,7 @@ Free and close everything related to a field structure.
 void	endfield(picstruct *field)
 
   {
-    /*  if (field->file)
-        fclose(field->file);  PWD:  file not opened, using NDF instead*/
 
-/* Free cat only if associated with an open file */
-  if (field->file)
-    free_cat(&field->cat, 1);
   free(field->strip);
   free(field->fstrip);
   if (field->wcs)

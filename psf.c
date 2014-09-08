@@ -128,6 +128,9 @@ psfstruct	*psf_load(char *filename, int ext)
    int			deg[POLY_MAXDIM], group[POLY_MAXDIM], ndim, ngroup,
 			e,i,k;
 
+   /* XXX not supported */
+   error(EXIT_FAILURE, "*Error*: PSF fitting not supported", filename);
+
 /* Open the cat (well it is not a "cat", but simply a FITS file */
   if (!(cat = read_cat(filename)))
     error(EXIT_FAILURE, "*Error*: PSF file not found: ", filename);
@@ -312,6 +315,8 @@ void	psf_readcontext(psfstruct *psf, picstruct *field)
       {
       psf->context[i] = &contextval[i];
       psf->contexttyp[i] = T_DOUBLE;
+
+      /*  XXX not supported
       if (fitsread(field->tab->headbuf, psf->contextname[i]+1, &contextval[i],
 		H_FLOAT,T_DOUBLE) == RETURN_ERROR)
         {
@@ -319,6 +324,8 @@ void	psf_readcontext(psfstruct *psf, picstruct *field)
 		psf->contextname[i]+1);
         error(EXIT_FAILURE, gstr, field->rfilename);
         }
+      */
+      error(EXIT_FAILURE, "*Error*: PSF fitting not supported", field->rfilename);
       }
 
   return;

@@ -209,10 +209,14 @@
 #define	NDFQFTELL(afile, pos, fname) \
                   pos = afile
 
+#define QFREE(ptr) \
+                {free(ptr); \
+                ptr = NULL;}
+
 #define	QCALLOC(ptr, typ, nel) \
 		{if (!(ptr = (typ *)calloc((size_t)(nel),sizeof(typ)))) \
 		   { \
-		   sprintf(gstr, #ptr " (" #nel "=%lld elements) " \
+		   sprintf(gstr, #ptr " (" #nel "=%zu elements) " \
 			"at line %d in module " __FILE__ " !", \
 			(size_t)(nel)*sizeof(typ), __LINE__); \
 		   error(EXIT_FAILURE, "Could not allocate memory for ", gstr);\
@@ -222,7 +226,7 @@
 #define	QMALLOC(ptr, typ, nel) \
 		{if (!(ptr = (typ *)malloc((size_t)(nel)*sizeof(typ)))) \
 		   { \
-		   sprintf(gstr, #ptr " (" #nel "=%lld elements) " \
+		   sprintf(gstr, #ptr " (" #nel "=%zu elements) " \
 			"at line %d in module " __FILE__ " !", \
 			(size_t)(nel)*sizeof(typ), __LINE__); \
 		   error(EXIT_FAILURE, "Could not allocate memory for ", gstr);\
@@ -232,7 +236,7 @@
 #define	QMALLOC16(ptr, typ, nel) \
 		{if (posix_memalign((void **)&ptr, 16, (size_t)(nel)*sizeof(typ))) \
 		   { \
-		   sprintf(gstr, #ptr " (" #nel "=%lld elements) " \
+		   sprintf(gstr, #ptr " (" #nel "=%zu elements) " \
 			"at line %d in module " __FILE__ " !", \
 			(size_t)(nel)*sizeof(typ), __LINE__); \
 		   error(EXIT_FAILURE, "Could not allocate memory for ", gstr);\
@@ -242,7 +246,7 @@
 #define	QREALLOC(ptr, typ, nel) \
 		{if (!(ptr = (typ *)realloc(ptr, (size_t)(nel)*sizeof(typ))))\
 		   { \
-		   sprintf(gstr, #ptr " (" #nel "=%lld elements) " \
+		   sprintf(gstr, #ptr " (" #nel "=%zu elements) " \
 			"at line %d in module " __FILE__ " !", \
 			(size_t)(nel)*sizeof(typ), __LINE__); \
 		   error(EXIT_FAILURE, "Could not allocate memory for ", gstr);\
@@ -253,7 +257,7 @@
 		{if (ptrin) \
                   {if (!(ptrout = (typ *)malloc((size_t)(nel)*sizeof(typ)))) \
 		     { \
-		     sprintf(gstr, #ptrout " (" #nel "=%lld elements) " \
+		     sprintf(gstr, #ptrout " (" #nel "=%zu elements) " \
 			"at line %d in module " __FILE__ " !", \
 			(size_t)(nel)*sizeof(typ), __LINE__); \
 		     error(EXIT_FAILURE,"Could not allocate memory for ",gstr);\

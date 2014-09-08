@@ -79,7 +79,6 @@ void	*loadstrip(picstruct *field, picstruct *wfield)
    int		y, w, flags, interpflag;
    PIXTYPE	*data, *wdata, *rmsdata;
 
-  tab = field->tab;
   w = field->width;
   flags = field->flags;
   interpflag = (wfield && wfield->interp_flag);
@@ -110,7 +109,7 @@ void	*loadstrip(picstruct *field, picstruct *wfield)
       else if (flags & INTERP_FIELD)
         copydata(field, 0, nbpix);
       else
-        read_body(tab, data, nbpix);
+        readdata(field, data, nbpix);
       if (flags & (WEIGHT_FIELD|RMS_FIELD|BACKRMS_FIELD|VAR_FIELD))
         weight_to_var(field, data, nbpix);
       if ((flags & MEASURE_FIELD) && (check=prefs.check[CHECK_IDENTICAL]))
@@ -162,7 +161,7 @@ void	*loadstrip(picstruct *field, picstruct *wfield)
 		*sizeof(FLAGTYPE))))
       error(EXIT_FAILURE,"Not enough memory for the flag buffer of ",
 	field->rfilename);
-      read_ibody(field->tab, field->fstrip, nbpix);
+      readidata(field, field->fstrip, nbpix);
       }
 
     field->ymax = field->stripheight;
@@ -236,7 +235,7 @@ void	*loadstrip(picstruct *field, picstruct *wfield)
         }
       }
     else
-      read_ibody(tab, field->fstrip + field->stripylim*w, w);
+      readidata(field, field->fstrip + field->stripylim*w, w);
 
     field->stripylim = (++field->ymin)%field->stripheight;
     if ((++field->ymax)<field->height)
@@ -469,14 +468,14 @@ void	readimagehead(picstruct *field)
     AstFrameSet  *wcsinfo;
     AstMapping   *map;
     AstSkyFrame  *template;
-    astromstruct *as;
+    struct wcs   *wcs;
     int          base;
     int          current;
     int          exists;
     int          outperm[2];
 
-    QCALLOC(as, astromstruct, 1);
-    field->astrom = as;
+    QCALLOC(wcs, struct wcs, 1);
+    field->wcs = wcs;
 
     /* See if the NDF has a WCS component */
     status = SAI__OK;
@@ -525,10 +524,12 @@ void	readimagehead(picstruct *field)
 
             /* Set a flag indicating if the current Frame in the WCS FrameSet
                is a usable SkyFrame. */
-            as->wcs_flag = 1;
+            wcs->lng = 0; /* XXX make this correct, pick out time axis */
+            wcs->lat = 1;
         } 
         else {
-            as->wcs_flag = 0;
+            wcs->lat = 0;
+            wcs->lng = 0;
         }
 
         /* The BASE coordinates should be 2D as well. Make sure that's the
@@ -552,14 +553,15 @@ void	readimagehead(picstruct *field)
         }
 
         /* Store the pointer to the WCS FrameSet */
-        as->naxis = 2;
+        wcs->naxis = 2;
         field->astwcs = wcsinfo;
 
         if ( status != SAI__OK ) errAnnul( &status );
     }
     else {
       /*  No WCS */
-      as->wcs_flag = 0;
+      wcs->lat = 0;
+      wcs->lng = 0;
     }
 
     /*-----------------------------------------------------------------------*/

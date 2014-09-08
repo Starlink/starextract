@@ -928,9 +928,12 @@ void	reinitcat(picstruct *field)
       case FITS_LDAC:
 /*------ We create a dummy table (only used through its header) */
         QCALLOC(asctab, tabstruct, 1);
-        asctab->headnblock = field->tab->headnblock;
-        QMEMCPY(field->tab->headbuf, asctab->headbuf, char,
-		asctab->headnblock*FBSIZE);
+
+        asctab->headnblock = field->fitsheadsize/FBSIZE;
+        asctab->headnblock=1;
+        QMALLOC(asctab->headbuf, char, asctab->headnblock*FBSIZE);
+        strncpy(asctab->headbuf,"END     ",8);
+
         key = headkey;
         while (*key->name)
           addkeyto_head(asctab, key++);
@@ -956,9 +959,11 @@ void	reinitcat(picstruct *field)
       case FITS_TPX:
 /*------ We create a dummy table (only used through its header) */
         QCALLOC(asctab, tabstruct, 1);
-        asctab->headnblock = field->tab->headnblock;
-        QMEMCPY(field->tab->headbuf, asctab->headbuf, char,
-		asctab->headnblock*FBSIZE);
+        asctab->headnblock = field->fitsheadsize/FBSIZE;
+        asctab->headnblock=1;
+        QMALLOC(asctab->headbuf, char, asctab->headnblock*FBSIZE);
+        strncpy(asctab->headbuf,"END     ",8);
+
         key = headkey;
         while (*key->name)
           addkeyto_head(asctab, key++);

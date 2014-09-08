@@ -141,10 +141,10 @@ void	makeback(picstruct *field, picstruct *wfield, int wscale_flag)
 /*---- The image is small enough so that we can make exhaustive stats */
       if (j == ny-1 && field->npix%bufsize)
         bufsize = field->npix%bufsize;
-      read_body(field->tab, buf, bufsize);
+      readdata(field, buf, bufsize);
       if (wfield)
         {
-        read_body(wfield->tab, wbuf, bufsize);
+        readdata(wfield, wbuf, bufsize);
         weight_to_var(wfield, wbuf, bufsize);
         }
 /*---- Build the histograms */
@@ -197,7 +197,7 @@ void	makeback(picstruct *field, picstruct *wfield, int wscale_flag)
       buft = buf;
       for (i=nlines; i--; buft += w)
         {
-        read_body(field->tab, buft, w);
+        readdata(field, buft, w);
         if (i)
           NDFQFSEEK(field->file, jumpsize*(OFF_T)field->bytepix, SEEK_CUR,
                     field->filename);
@@ -211,7 +211,7 @@ void	makeback(picstruct *field, picstruct *wfield, int wscale_flag)
         wbuft = wbuf;
         for (i=nlines; i--; wbuft += w)
           {
-          read_body(wfield->tab, wbuft, w);
+          readdata(wfield, wbuft, w);
           weight_to_var(wfield, wbuft, w);
           if (i)
               NDFQFSEEK(wfield->file, jumpsize*(OFF_T)wfield->bytepix, 
@@ -242,10 +242,10 @@ void	makeback(picstruct *field, picstruct *wfield, int wscale_flag)
         {
         if (bufsize2>size)
           bufsize2 = size;
-        read_body(field->tab, buf, bufsize2);
+        readdata(field, buf, bufsize2);
         if (wfield)
           {
-          read_body(wfield->tab, wbuf, bufsize2);
+          readdata(wfield, wbuf, bufsize2);
           weight_to_var(wfield, wbuf, bufsize2);
           }
         backhisto(backmesh, wbackmesh, buf, wbuf, bufsize2, nx, w, bw,

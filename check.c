@@ -559,7 +559,7 @@ void	writecheck(checkstruct *check, PIXTYPE *data, int w)
     pixt = (PIXTYPE *)check->line;
     for (i=w; i--; data++)
       *(pixt++) = (*data>-BIG)? *data:0.0;
-    write_body(check->cat->tab, (PIXTYPE *)check->line, w);
+    data = check->line;
    }
   else if (check->type == CHECK_MASK)
     {
@@ -569,7 +569,7 @@ void	writecheck(checkstruct *check, PIXTYPE *data, int w)
     pixt = (FLAGTYPE *)check->line;
     for (i=w; i--;)
       *(pixt++) = (*(data++)>-BIG)?0:1;
-    write_ibody(check->cat->tab, (FLAGTYPE *)check->line, w);
+    data = check->line;
     }
   else if (check->type == CHECK_BACKRMS)
     {
@@ -589,10 +589,10 @@ void	writecheck(checkstruct *check, PIXTYPE *data, int w)
     pixt = (FLAGTYPE *)check->line;
     for (i=w; i--;)
       *(pixt++) = (*(data++)>-BIG)?1:0;
-    write_ibody(check->cat->tab, (FLAGTYPE *)check->line, w);
+    data = check->line;
     }
   else
-    write_body(check->cat->tab, data, w);
+    data = check->line;
 
 /* Write line into mapped NDF */
   memcpy( (PIXTYPE *)check->map+check->pos, data, w*sizeof(PIXTYPE) );
@@ -642,7 +642,6 @@ void	reendcheck(picstruct *field, checkstruct *check)
       break;
 
     case CHECK_PATTERNS:
-    case CHECK_MAPSOM:
     case CHECK_OTHER:
       break;
 
@@ -661,8 +660,6 @@ void	reendcheck(picstruct *field, checkstruct *check)
       break;
       }
 
-    case CHECK_MAPSOM:
-      break;
     case CHECK_SUBOBJECTS:
       {
        int	y;
@@ -674,6 +671,9 @@ void	reendcheck(picstruct *field, checkstruct *check)
       check->line = NULL;
       break;
       }
+
+    case CHECK_MAPSOM:
+      break;
 
     default:
       error(EXIT_FAILURE, "*Internal Error* in ", "endcheck()!");

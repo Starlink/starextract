@@ -34,13 +34,11 @@
 #include	<stdlib.h>
 #include	<string.h>
 
-#include 	"wcs/wcs.h"
 #include	"define.h"
 #include	"globals.h"
 #include	"prefs.h"
 #include	"astrom.h"
 #include	"fitswcs.h"
-#include	"wcs/tnx.h"
 
 static obj2struct	*obj2 = &outobj2;
 

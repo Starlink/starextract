@@ -284,16 +284,15 @@ void	makeit()
       
       NFPRINTF(OUTPUT, "Initializing check-image(s)");
       for (i=0; i<prefs.ncheck_type; i++)
-          if ((c=prefs.check_type[i]) != CHECK_NONE)
+        if ((c=prefs.check_type[i]) != CHECK_NONE)
           {
-              if (prefs.check[c])
-                  error(EXIT_FAILURE,"*Error*: 2 CHECK_IMAGEs cannot have the same ",
+            if (prefs.check[c])
+              error(EXIT_FAILURE,"*Error*: 2 CHECK_IMAGEs cannot have the same ",
                         " CHECK_IMAGE_TYPE");
-              prefs.check[c] = initcheck(prefs.check_name[i], prefs.check_type[i],
-                                         next);
-              free(prefs.check_name[i]);
+            prefs.check[c] = initcheck(prefs.check_name[i], prefs.check_type[i],
+                                       next);
+            free(prefs.check_name[i]);
           }
-        }
     }
 
   NFPRINTF(OUTPUT, "Initializing catalog");
@@ -408,7 +407,7 @@ void	makeit()
 /*-- Compute background maps for `standard' fields */
   QPRINTF(OUTPUT, dfield? "Measurement image:"
           : "Detection+Measurement image: ");
-  makeback(field, wfield);
+  makeback(field, wfield, prefs.wscale_flag[1]);
   QPRINTF(OUTPUT, (dfield || (dwfield&&dwfield->flags^INTERP_FIELD))? "(M)   "
           "Background: %-10g RMS: %-10g / Threshold: %-10g \n"
           : "(M+D) "
@@ -419,14 +418,15 @@ void	makeit()
   {
       QPRINTF(OUTPUT, "Detection image: ");
       makeback(dfield, dwfield? dwfield
-               : (prefs.weight_type[0] == WEIGHT_NONE?NULL:wfield));
+                        : (prefs.weight_type[0] == WEIGHT_NONE?NULL:wfield),
+                prefs.wscale_flag[0]);
       QPRINTF(OUTPUT, "(D)   "
               "Background: %-10g RMS: %-10g / Threshold: %-10g \n",
               dfield->backmean, dfield->backsig, dfield->dthresh);
   }
   else if (dwfield && dwfield->flags^INTERP_FIELD)
   {
-      makeback(field, dwfield);
+      makeback(field, dwfield, prefs.wscale_flag[0]);
       QPRINTF(OUTPUT, "(D)   "
               "Background: %-10g RMS: %-10g / Threshold: %-10g \n",
               field->backmean, field->backsig, field->dthresh);

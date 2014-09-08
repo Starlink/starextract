@@ -570,80 +570,82 @@ typedef struct
 typedef struct pic
   {
   char		filename[MAXCHAR];	/* pointer to the image filename */
-  char		*rfilename;		/* pointer to the reduced image name */
+  char		*rfilename;	    	/* pointer to the reduced image name */
   char		hfilename[MAXCHAR];	/* external header filename */
-  int		headflag;		/* external header found? */
+  int		headflag;	    	/* external header found? */
   char		ident[MAXCHAR];		/* field identifier (read from FITS)*/
   char		rident[MAXCHAR];	/* field identifier (relative) */
-    /*  FILE		*file;	     */ /* pointer the image file structure */
-  char		*fitshead;		/* pointer to the FITS header */
+/*catstruct     *cat;                 *//* FITS structure */
+/*tabstruct     *tab;                 *//* FITS extension structure */
+/*FILE		*file;	              *//* pointer the image file structure */
+  char		*fitshead;	    	/* pointer to the FITS header */
   int		fitsheadsize;		/* FITS header size */
 
 /* ---- main image parameters */
   int		bitpix, bytepix;	/* nb of bits and bytes per pixel */
-  int		bitsgn;			/* non-zero if signed integer data */
+  int		bitsgn;	    		/* non-zero if signed integer data */
   int		width, height;		/* x,y size of the field */
   KINGSIZE_T	npix;			/* total number of pixels */
   double	bscale, bzero;		/* FITS scale and offset */
-  double	ngamma;			/* normalized photo gamma */
-  int		nlevels;		/* nb of quantification levels */
+  double	ngamma;		    	/* normalized photo gamma */
+  int		nlevels;		    /* nb of quantification levels */
   float		pixmin, pixmax;		/* min and max values in frame */
-  int		y;			/* y current position in field */
-  int		ymin;			/* y limit (lowest accessible) */
-  int		ymax;			/* y limit (highest accessible+1) */
-  int		yblank;			/* y blanking limit (highest+1) */
-  PIXTYPE	*strip;			/* pointer to the image buffer */
-  FLAGTYPE	*fstrip;		/* pointer to the FLAG buffer */
+  int		y;	        		/* y current position in field */
+  int		ymin;		    	/* y limit (lowest accessible) */
+  int		ymax;   			/* y limit (highest accessible+1) */
+  int		yblank;	    		/* y blanking limit (highest+1) */
+  PIXTYPE	*strip;		    	/* pointer to the image buffer */
+  FLAGTYPE	*fstrip;		    /* pointer to the FLAG buffer */
   int		stripheight;		/* height  of a strip (in lines) */
   int		stripmargin;		/* number of lines in margin */
-  int		stripstep;		/* number of lines at each read */
-  int		stripy;			/* y position in buffer */
-  int		stripylim;		/* y limit in buffer */
+  int		stripstep;  		/* number of lines at each read */
+  int		stripy;	    		/* y position in buffer */
+  int		stripylim;	    	/* y limit in buffer */
   int		stripysclim;		/* y scroll limit in buffer */
 /* ---- basic astrometric parameters */
-   double	pixscale;		/* pixel size in arcsec.pix-1 */
-   double	epoch;			/* epoch of coordinates */
+   double	pixscale;	    	/* pixel size in arcsec.pix-1 */
+   double	epoch;		    	/* epoch of coordinates */
 /* ---- basic photometric parameters */
-   double	gain;			/* conversion factor in e-/ADU */
+   double	gain;		    	/* conversion factor in e-/ADU */
    double	satur_level;		/* saturation level in ADUs */
 /* ---- background parameters */
-  float		*back;			/* ptr to the background map in mem */
-  float		*dback;			/* ptr to the background deriv. map */
-  float		*sigma;			/* ptr to the sigma map */
-  float		*dsigma;		/* Ptr to the sigma deriv. map */
+  float		*back;		    	/* ptr to the background map in mem */
+  float		*dback;	    		/* ptr to the background deriv. map */
+  float		*sigma;	    		/* ptr to the sigma map */
+  float		*dsigma;	    	/* Ptr to the sigma deriv. map */
   int		backw, backh;		/* x,y size of a bkgnd mesh */
-  int		nbackp;			/* total nb of pixels per bkgnd mesh */
+  int		nbackp;			    /* total nb of pixels per bkgnd mesh */
   int		nbackx, nbacky;		/* x,y number of bkgnd meshes */
-  int		nback;			/* total number of bkgnd meshes */
+  int		nback;		    	/* total number of bkgnd meshes */
   int		nbackfx, nbackfy;	/* x,y size of bkgnd filtering mask */
-  float		backmean;		/* median bkgnd value in image */
-  float		backsig;		/* median bkgnd rms in image */
-  float		sigfac;			/* scaling RMS factor (for WEIGHTs) */
-  PIXTYPE	*backline;		/* current interpolated bkgnd line */
-  PIXTYPE	dthresh;		/* detection threshold */
-  PIXTYPE	thresh;			/* analysis threshold */
-  backenum	back_type;		/* Background type */
+  float		backmean;	    	/* median bkgnd value in image */
+  float		backsig;	    	/* median bkgnd rms in image */
+  float		sigfac;		    	/* scaling RMS factor (for WEIGHTs) */
+  PIXTYPE	*backline;	    	/* current interpolated bkgnd line */
+  PIXTYPE	dthresh;	    	/* detection threshold */
+  PIXTYPE	thresh;		    	/* analysis threshold */
+  backenum	back_type;	    	/* Background type */
 /* ---- astrometric parameters */
   struct wcs	*wcs;			/* astrometric data */
-  struct structassoc	*assoc;		/* ptr to the assoc-list */
-  int		flags;			/* flags defining the field type */
+  struct structassoc	*assoc;	/* ptr to the assoc-list */
+  int		flags;	    		/* flags defining the field type */
 /* ---- image interpolation */
   int		interp_flag;		/* interpolation for this field? */
   PIXTYPE	*interp_backup;		/* backup line for interpolation */
   PIXTYPE	weight_thresh;		/* interpolation threshold */
-  int		*interp_ytimeoutbuf;	/* interpolation timeout line buffer */
+  int		*interp_ytimeoutbuf;/* interpolation timeout line buffer */
   int		interp_xtimeout;	/* interpolation timeout value in x */
   int		interp_ytimeout;	/* interpolation timeout value in y */
-  struct pic	*reffield;	       	/* pointer to a reference field */
-  OFF_T		mefpos;			/* Position in a MEF file */
+  struct pic	*reffield;      /* pointer to a reference field */
+  OFF_T		mefpos;		    	/* Position in a MEF file */
 
 /* ---- NDF */
-  int           ndf;                    /* NDF identifier */
-  void          *map;                   /* pointer to mapped data */
-  int           nel;                    /* size of map (pixels) */
-  int           file;                   /* next pixel number from map */
-  int           origin[2];              /* NDF origins */
-  AstFrameSet   *astwcs;                /* NDF WCS component */
+  int           ndf;            /* NDF identifier */
+  void          *map;           /* pointer to mapped data */
+  int           nel;            /* size of map (pixels) */
+  int           file;           /* next pixel number from map */
+  int           origin[2];      /* NDF origins */
+  AstFrameSet   *astwcs;        /* NDF WCS component */
   }	picstruct;
 
 
