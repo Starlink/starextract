@@ -66,34 +66,6 @@ wcsstruct	*copy_wcs(wcsstruct *wcsin)
   }
 
 
-/******* read_wcs *************************************************************
-PROTO	wcsstruct *read_wcs(AstFrameSet *frmset)
-PURPOSE	Read WCS (World Coordinate System) info in the FITS header.
-INPUT	tab structure.
-OUTPUT	-.
-NOTES	-.
-AUTHOR	E. Bertin (IAP)
-VERSION	18/06/2012
- ***/
-wcsstruct	*read_wcs(AstFrameSet *frmset)
-  {
-  wcsstruct	*wcs;
-  QCALLOC(wcs, wcsstruct, 1);
-
-  wcs->astwcs = frmset; /* Note not a clone or copy, so don't manage or modify */
-
-  /*  Longtitude and Latitude axes. */
-  wcs->lat = astGetI( frmset, "LatAxis" );
-  wcs->lng = astGetI( frmset, "LonAxis" );
-
-  /* Equinox and epoch. */
-  wcs->equinox = astGetD( frmset, "Equinox" );
-  wcs->epoch = astGetD( frmset, "Epoch" );
-
-  return wcs;
-  }
-
-
 /******* end_wcs **************************************************************
 PROTO	void end_wcs(wcsstruct *wcs)
 PURPOSE	Free WCS (World Coordinate System) infos.
@@ -129,8 +101,13 @@ int	raw_to_wcs(wcsstruct *wcs, double *pixpos, double *wcspos)
 
   xin[0] = pixpos[0];
   yin[0] = pixpos[1];
-
   astTran2( wcs->astwcs, 1, xin, yin, 1, xout, yout );
+  wcspos[0] = xout[0];
+  wcspos[1] = yout[0];
+  astNorm( wcs->astwcs, wcspos );
+  wcspos[0] /= DEG;
+  wcspos[1] /= DEG;
+  
   if ( ! astOK )
     {
     astClearStatus;
@@ -156,9 +133,8 @@ int	wcs_to_raw(wcsstruct *wcs, double *wcspos, double *pixpos)
   double xin[1], yin[1];
   double xout[1], yout[1];
 
-  xin[0] = pixpos[0];
-  yin[0] = pixpos[1];
-
+  xin[0] = wcspos[0] * DEG;
+  yin[0] = wcspos[1] * DEG;
   astTran2( wcs->astwcs, 1, xin, yin, 0, xout, yout );
   if ( ! astOK )
     {
@@ -415,3 +391,4 @@ int  fcmp_0_p360(double anglep, double anglem)
 
   return (int)((dval>0.0 && dval<180.0) || dval<-180.0);
   }
+

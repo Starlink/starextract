@@ -645,7 +645,6 @@ typedef struct pic
   int           nel;            /* size of map (pixels) */
   int           file;           /* next pixel number from map */
   int           origin[2];      /* NDF origins */
-  AstFrameSet   *astwcs;        /* NDF WCS component */
   }	picstruct;
 
 

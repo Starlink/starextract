@@ -479,7 +479,7 @@ void	readimagehead(picstruct *field)
 
     /* See if the NDF has a WCS component */
     status = SAI__OK;
-    field->astwcs = NULL;
+    wcs->astwcs = NULL;
     ndfState( field->ndf, "WCS", &exists, &status );
     if ( exists ) {
 
@@ -493,7 +493,7 @@ void	readimagehead(picstruct *field)
            left unset (such as System) will act as wild cards and match any
            value in the WCS FrameSet. 
         */
-        template = astSkyFrame( "" );
+        template = astSkyFrame( " " );
 
         /* Allow the find to pick out a SkyFrame that's inside a nD frame,
          * most likely this matches the current frame dimensionality */
@@ -506,7 +506,7 @@ void	readimagehead(picstruct *field)
            template but inherits attribute values from the matching (Sky)Frame
            in the WCS FrameSet.
         */
-        fs = astFindFrame( wcsinfo, template, "" );
+        fs = astFindFrame( wcsinfo, template, " " );
         template = astAnnul( template );
 
         /* A NULL pointer is returned if no SkyFrame is found in the WCS
@@ -524,8 +524,12 @@ void	readimagehead(picstruct *field)
 
             /* Set a flag indicating if the current Frame in the WCS FrameSet
                is a usable SkyFrame. */
-            wcs->lng = 0; /* XXX make this correct, pick out time axis */
-            wcs->lat = 1;
+            wcs->lat = astGetI( wcsinfo, "LatAxis" );
+            wcs->lng = astGetI( wcsinfo, "LonAxis" );
+
+            /* Equinox and epoch. */
+            wcs->equinox = astGetD( wcsinfo, "Equinox" );
+            wcs->epoch = astGetD( wcsinfo, "Epoch" );
         } 
         else {
             wcs->lat = 0;
@@ -539,7 +543,7 @@ void	readimagehead(picstruct *field)
             outperm[1] = sigaxis[1] + 1;
             baseframe = astGetFrame( fs, AST__BASE );
             frame = astPickAxes( baseframe, 2, outperm, &map );
-            astAnnul( baseframe );
+            baseframe = astAnnul( baseframe );
 
             /* Now add this frame to the FrameSet and make it the base
              * one. Also reinstate the skyframe as the current frame.*/
@@ -548,13 +552,44 @@ void	readimagehead(picstruct *field)
             base = astGetI( wcsinfo, "Current" );
             astSetI( wcsinfo, "Base", base );
             astSetI( wcsinfo, "Current", current );
-            astAnnul( frame );
-            astAnnul( map );
+            frame = astAnnul( frame );
+            map = astAnnul( map );
         }
 
         /* Store the pointer to the WCS FrameSet */
         wcs->naxis = 2;
-        field->astwcs = wcsinfo;
+        wcs->astwcs = wcsinfo;
+
+        /* Need a default pixel scale, only sensible for Sky domains. */
+        field->pixscale = 1.0;
+        if ( wcs->lat != wcs->lng ) {
+            double point1[2], point2[2];
+            double xin[2], yin[2], xout[2], yout[2];
+            double dist;
+            double xcen, ycen;
+
+            /* Compute the scales the the sizes of a pixel near the centre of
+             * the image. */
+            xcen = 0.5 * ( (double) field->width );
+            ycen = 0.5 * ( (double) field->height );
+            xin[0] = xcen - 0.5;
+            xin[1] = xcen + 0.5;
+            yin[0] = yin[1] = ycen;
+
+            /* Transform these image positions into sky coordinates. */
+            astTran2( wcsinfo, 2, xin, yin, 1, xout, yout );
+
+            /* And now get the distance between these positions in degrees. */
+            point1[0] = xout[0];
+            point1[1] = yout[0];
+            point2[0] = xout[1];
+            point2[1] = yout[1];
+            dist = astDistance( wcsinfo, point1, point2 );
+            if ( ! astOK ) astClearStatus;
+            if ( dist != AST__BAD )  {
+                field->pixscale = dist / DEG * 3600.0;
+            }
+        }
 
         if ( status != SAI__OK ) errAnnul( &status );
     }
@@ -562,6 +597,8 @@ void	readimagehead(picstruct *field)
       /*  No WCS */
       wcs->lat = 0;
       wcs->lng = 0;
+      wcs->epoch = 2000.0;
+      wcs->equinox = 2000.0;
     }
 
     /*-----------------------------------------------------------------------*/

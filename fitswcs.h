@@ -60,8 +60,7 @@ typedef struct wcs
 
 /*------------------------------- functions ---------------------------------*/
 
-extern wcsstruct	*copy_wcs(wcsstruct *wcsin),
-			*read_wcs(AstFrameSet *frmset);
+extern wcsstruct	*copy_wcs(wcsstruct *wcsin);
 
 extern double		fmod_0_p360(double angle),
 			fmod_m90_p90(double angle),

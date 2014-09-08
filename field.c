@@ -84,18 +84,17 @@ picstruct	*newfield(char *filename, int flags, int ext)
 /* Check the image exists and read important info (image size, etc...) */
   readimagehead(field);
 
-  QPRINTF(OUTPUT, "----- %s %s%s\n",
+  QPRINTF(OUTPUT, "----- %s %s\n",
         flags&FLAG_FIELD?   "Flagging  from:" :
        (flags&(RMS_FIELD|VAR_FIELD|WEIGHT_FIELD)?
                              "Weighting from:" :
        (flags&MEASURE_FIELD? "Measuring from:" :
-                             "Detecting from:")),
-        field->rfilename,
-        gstr );
+                            "Detecting from:")),
+        field->rfilename);
   QPRINTF(OUTPUT, "      \"%.20s\" / %s / %dx%d / %d bits\n",
         field->ident,
         field->headflag? "EXT. HEADER" : "no ext. header",
-          field->width, field->height, field->bytepix*8 );
+        field->width, field->height, field->bytepix*8 );
 
 /* Check the astrometric system and do the setup of the astrometric stuff */
   if (prefs.world_flag && (flags & (MEASURE_FIELD|DETECT_FIELD)))
