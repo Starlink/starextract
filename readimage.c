@@ -541,10 +541,9 @@ void	readimagehead(picstruct *field)
             map = astAnnul( map );
             frame = astAnnul( frame );
 
-            /* Set a flag indicating if the current Frame in the WCS FrameSet
-               is a usable SkyFrame. */
-            wcs->lat = astGetI( wcsinfo, "LatAxis" );
-            wcs->lng = astGetI( wcsinfo, "LonAxis" );
+            /*  Longtitude and latitude, zero based axes */
+            wcs->lat = astGetI( wcsinfo, "LatAxis" ) - 1;
+            wcs->lng = astGetI( wcsinfo, "LonAxis" ) - 1;
 
             /* Equinox and epoch. */
             wcs->equinox = astGetD( wcsinfo, "Equinox" );
