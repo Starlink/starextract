@@ -103,17 +103,15 @@ picstruct	*newfield(char *filename, int flags, int ext)
     field->pixscale=prefs.pixel_scale;
 
 /* Gain and Saturation */
-/* XXX Need NDF FITS header access.
   if (flags & (DETECT_FIELD|MEASURE_FIELD))
     {
-    if (fitsread(field->tab->headbuf, prefs.gain_key, &field->gain,
+    if (fitsread(field->fitshead, prefs.gain_key, &field->gain,
 	H_FLOAT, T_DOUBLE) != RETURN_OK)
       field->gain = prefs.gain;
-    if (fitsread(field->tab->headbuf, prefs.satur_key, &field->satur_level,
+    if (fitsread(field->fitshead, prefs.satur_key, &field->satur_level,
 	H_FLOAT, T_DOUBLE) !=RETURN_OK)
       field->satur_level = prefs.satur_level;
     }
-*/
 
 /* Background */
   if (flags & (DETECT_FIELD|MEASURE_FIELD|WEIGHT_FIELD|VAR_FIELD|RMS_FIELD))

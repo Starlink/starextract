@@ -65,6 +65,7 @@
 #include	"weight.h"
 
 #include        "sae_par.h"
+#include        "star/hds.h"
 #include        "ndf.h"
 #include        "merswrap.h"
 
@@ -387,6 +388,8 @@ void	readimagehead(picstruct *field)
    int          sigaxis[2];
    int          nsig;
    int          i;
+   int          exists;
+
 
 /* Open the file */
   field->file = 0;
@@ -459,6 +462,23 @@ void	readimagehead(picstruct *field)
   field->origin[0] = lbnd[sigaxis[0]];
   field->origin[1] = lbnd[sigaxis[1]];
 
+  /*  Look for the FITS header and map, note never unmap, let
+   *  annul clear this resource. */
+  ndfXstat( field->ndf, "FITS", &exists, &status );
+  if ( exists ) {
+      HDSLoc *fitsloc = NULL;
+      size_t nhead = 0;
+      ndfXloc( field->ndf, "FITS", "READ", &fitsloc, &status );
+      datMapV( fitsloc, "_CHAR*80", "READ", &field->fitshead, 
+               &nhead, &status );
+      field->fitsheadsize = nhead;
+  }
+  else {
+      field->fitshead = "END ";
+      field->fitsheadsize = strlen( field->fitshead );
+  }
+
+
 /*----------------------------- Astrometry ---------------------------------*/
 /* Presently, astrometry is done only on the measurement and detect images */
   if ( field->flags & ( MEASURE_FIELD | DETECT_FIELD ) ) {
@@ -471,7 +491,6 @@ void	readimagehead(picstruct *field)
     struct wcs   *wcs;
     int          base;
     int          current;
-    int          exists;
     int          outperm[2];
 
     QCALLOC(wcs, struct wcs, 1);
