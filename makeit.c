@@ -120,27 +120,24 @@ void	makeit()
   useprefs();			/* update things accor. to prefs parameters */
 
 /* Check if a specific extension should be loaded */
-  if ((nima0=selectext(prefs.image_name[0])) != RETURN_ERROR)
-    {
-    forcextflag = 1;
-    ntabmax = next = 1;
-    }
-  else
-    forcextflag = 0;
+/* Never true for an NDF, although we could through all NDFs in a container, */
+/* so we make selectext go away. */
+  nima0 = -1;
+  forcextflag = 0;
 
 /* Do the same for other data (but do not force single extension mode) */
-  nima1 = selectext(prefs.image_name[1]);
-  nweight0 = selectext(prefs.wimage_name[0]);
-  nweight1 = selectext(prefs.wimage_name[1]);
+  nima1 = -1;    /* selectext(prefs.image_name[1]) */
+  nweight0 = -1; /* selectext(prefs.wimage_name[0]) */
+  nweight1 = -1; /* selectext(prefs.wimage_name[1]) */
   if (prefs.dpsf_flag)
     {
-    npsf0 = selectext(prefs.psf_name[0]);
-    npsf1 = selectext(prefs.psf_name[1]);
+    npsf0 = -1; /* selectext(prefs.psf_name[0]) */
+    npsf1 = -1; /* selectext(prefs.psf_name[1]) */
     }
   else
-    npsf0 = selectext(prefs.psf_name[0]);
+    npsf0 = -1; /* selectext(prefs.psf_name[0]) */
   for (i=0; i<prefs.nfimage_name; i++)
-    nflag[i] = selectext(prefs.fimage_name[i]);
+    nflag[i] = -1; /* selectext(prefs.fimage_name[i]) */
 
   if (prefs.psf_flag)
     {
