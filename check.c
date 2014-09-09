@@ -524,7 +524,6 @@ void	reinitcheck(picstruct *field, checkstruct *check)
         memcpy(check->map, field->sigma, check->npix*sizeof(float));
      else
         memcpy(check->map, field->back, check->npix*sizeof(float));
-     ndfAnnul(&check->ndf,&status);
      break;
   default:
      error(EXIT_FAILURE, "*Error* Invalid check_type in ", "initcheck()!");
@@ -571,16 +570,6 @@ void	writecheck(checkstruct *check, PIXTYPE *data, int w)
       *(pixt++) = (*(data++)>-BIG)?0:1;
     data = check->line;
     }
-  else if (check->type == CHECK_BACKRMS)
-    {
-     int	i;
-     PIXTYPE	*pixt;
-
-    pixt = check->line;
-    for (i=w; i--;)
-      *(pixt++) = (PIXTYPE)sqrt(*(data++));
-    data = check->line;
-    }
   else if (check->type == CHECK_SUBMASK)
     {
      int		i;
@@ -591,8 +580,6 @@ void	writecheck(checkstruct *check, PIXTYPE *data, int w)
       *(pixt++) = (*(data++)>-BIG)?1:0;
     data = check->line;
     }
-  else
-    data = check->line;
 
 /* Write line into mapped NDF */
   memcpy( (PIXTYPE *)check->map+check->pos, data, w*sizeof(PIXTYPE) );
@@ -607,7 +594,6 @@ void	writecheck(checkstruct *check, PIXTYPE *data, int w)
 */
 void	reendcheck(picstruct *field, checkstruct *check)
   {
-  size_t	padsize;
 
   switch(check->type)
     {

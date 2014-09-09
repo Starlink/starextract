@@ -258,24 +258,6 @@ void	makeit()
 
 /*-- Init the CHECK-images */
   if (prefs.check_flag)
-  {
-      checkenum	c;
-      
-      NFPRINTF(OUTPUT, "Initializing check-image(s)");
-      for (i=0; i<prefs.ncheck_type; i++)
-          if ((c=prefs.check_type[i]) != CHECK_NONE)
-          {
-              if (prefs.check[c])
-                  error(EXIT_FAILURE,"*Error*: 2 CHECK_IMAGEs cannot have the same ",
-                        " CHECK_IMAGE_TYPE");
-              prefs.check[c] = initcheck(prefs.check_name[i], prefs.check_type[i],
-                                         next);
-              free(prefs.check_name[i]);
-          }
-  }
-  
-/*-- Init the CHECK-images */
-  if (prefs.check_flag)
     {
       checkenum	c;
       
