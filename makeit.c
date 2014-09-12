@@ -256,6 +256,10 @@ void	makeit()
   if (prefs.growth_flag)
     initgrowth();
 
+/* Allocate memory for multidimensional catalog parameter arrays */
+  alloccatparams();
+  useprefs();
+
 /*-- Init the CHECK-images */
   if (prefs.check_flag)
     {
