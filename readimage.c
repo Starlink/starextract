@@ -34,9 +34,9 @@
 *                       17/12/98 (PWD):
 *                          Changed to use NDF WCS component for astrometry.
 *	                27/11/2003 (EB):
-*                       23-NOV-2005 (TIMJ): 
+*                       23-NOV-2005 (TIMJ):
 *                          Remove DAT__ROOT
-*                       26/01/2006 (PWD): 
+*                       26/01/2006 (PWD):
 *                          Changed to handle redundant axes in data and native
 *                          data type of NDF.
 */
@@ -469,13 +469,13 @@ void	readimagehead(picstruct *field)
       HDSLoc *fitsloc = NULL;
       size_t nhead = 0;
       ndfXloc( field->ndf, "FITS", "READ", &fitsloc, &status );
-      datMapV( fitsloc, "_CHAR*80", "READ", &field->fitshead, 
+      datMapV( fitsloc, "_CHAR*80", "READ", (void**) &field->fitshead,
                &nhead, &status );
       field->fitsheadsize = nhead;
   }
   else {
       field->fitshead = "END ";
-      field->fitsheadsize = strlen( field->fitshead );
+      field->fitsheadsize = 1;
   }
 
 
@@ -510,7 +510,7 @@ void	readimagehead(picstruct *field)
            axis. Create such a Frame (a SkyFrame) which we can use as a
            template for probing the WCS FrameSet. All attributes which are
            left unset (such as System) will act as wild cards and match any
-           value in the WCS FrameSet. 
+           value in the WCS FrameSet.
         */
         template = astSkyFrame( " " );
 
@@ -548,7 +548,7 @@ void	readimagehead(picstruct *field)
             /* Equinox and epoch. */
             wcs->equinox = astGetD( wcsinfo, "Equinox" );
             wcs->epoch = astGetD( wcsinfo, "Epoch" );
-        } 
+        }
         else {
             wcs->lat = 0;
             wcs->lng = 0;
