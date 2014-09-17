@@ -266,6 +266,19 @@
                    }; \
                  }
 
+#define QMEMCPY2(ptrin, ptrout, typ, nel, ncpy)      \
+		{if (ptrin) \
+                  {if (!(ptrout = (typ *)malloc((size_t)(nel)*sizeof(typ)))) \
+		     { \
+		     sprintf(gstr, #ptrout " (" #nel "=%lld elements) " \
+			"at line %d in module " __FILE__ " !", \
+			(size_t)(nel)*sizeof(typ), __LINE__); \
+		     error(EXIT_FAILURE,"Could not allocate memory for ",gstr);\
+                     }; \
+                   memcpy(ptrout, ptrin, (size_t)(ncpy)*sizeof(typ)); \
+                   }; \
+                 }
+
 #define	RINT(x)	(int)(floor(x+0.5))
 
 #define	PIX(pic, x, y)	pic->strip[(((int)y)%pic->stripheight) \
