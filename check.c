@@ -675,8 +675,8 @@ close check-image.
 void	endcheck(checkstruct *check)
   {
   int status = SAI__OK;
-  free(check);
   ndfAnnul( &check->ndf, &status );
+  free(check);
   return;
   }
 
