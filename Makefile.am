@@ -40,7 +40,7 @@ libextractor_a_SOURCES	= adamprint.c userradii.c userradii.h \
                           analyse.c assoc.c astrom.c back.c bpro.c catout.c \
 			  check.c clean.c extract.c $(FFTSOURCE) field.c \
 			  filter.c fitswcs.c flag.c graph.c growth.c header.c \
-			  image.c interpolate.c main.c makeit.c manobjlist.c \
+			  image.c interpolate.c makeit.c manobjlist.c \
 			  misc.c neurro.c $(PATTERNSOURCE) pc.c photom.c \
 			  plist.c prefs.c $(PROFITSOURCE) psf.c readimage.c \
 			  refine.c retina.c scan.c som.c weight.c winpos.c \

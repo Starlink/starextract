@@ -133,7 +133,7 @@ libextractor_a_LIBADD =
 am__libextractor_a_SOURCES_DIST = adamprint.c userradii.c userradii.h \
 	analyse.c assoc.c astrom.c back.c bpro.c catout.c check.c \
 	clean.c extract.c fft.c field.c filter.c fitswcs.c flag.c \
-	graph.c growth.c header.c image.c interpolate.c main.c \
+	graph.c growth.c header.c image.c interpolate.c \
 	makeit.c manobjlist.c misc.c neurro.c pattern.c pc.c photom.c \
 	plist.c prefs.c profit.c psf.c readimage.c refine.c retina.c \
 	scan.c som.c weight.c winpos.c xml.c wcs/poly.c assoc.h \
@@ -154,7 +154,7 @@ am_libextractor_a_OBJECTS = adamprint.$(OBJEXT) userradii.$(OBJEXT) \
 	field.$(OBJEXT) filter.$(OBJEXT) fitswcs.$(OBJEXT) \
 	flag.$(OBJEXT) graph.$(OBJEXT) growth.$(OBJEXT) \
 	header.$(OBJEXT) image.$(OBJEXT) interpolate.$(OBJEXT) \
-	main.$(OBJEXT) makeit.$(OBJEXT) manobjlist.$(OBJEXT) \
+	makeit.$(OBJEXT) manobjlist.$(OBJEXT) \
 	misc.$(OBJEXT) neurro.$(OBJEXT) $(am__objects_2) pc.$(OBJEXT) \
 	photom.$(OBJEXT) plist.$(OBJEXT) prefs.$(OBJEXT) \
 	$(am__objects_3) psf.$(OBJEXT) readimage.$(OBJEXT) \
@@ -378,7 +378,7 @@ libextractor_a_SOURCES = adamprint.c userradii.c userradii.h \
                           analyse.c assoc.c astrom.c back.c bpro.c catout.c \
 			  check.c clean.c extract.c $(FFTSOURCE) field.c \
 			  filter.c fitswcs.c flag.c graph.c growth.c header.c \
-			  image.c interpolate.c main.c makeit.c manobjlist.c \
+			  image.c interpolate.c makeit.c manobjlist.c \
 			  misc.c neurro.c $(PATTERNSOURCE) pc.c photom.c \
 			  plist.c prefs.c $(PROFITSOURCE) psf.c readimage.c \
 			  refine.c retina.c scan.c som.c weight.c winpos.c \
@@ -470,7 +470,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/header.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/image.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/interpolate.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/makeit.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/manobjlist.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/misc.Po@am__quote@
