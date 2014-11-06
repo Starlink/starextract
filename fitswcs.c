@@ -101,13 +101,18 @@ int	raw_to_wcs(wcsstruct *wcs, double *pixpos, double *wcspos)
 
   xin[0] = pixpos[0];
   yin[0] = pixpos[1];
-  astTran2( wcs->astwcs, 1, xin, yin, 1, xout, yout );
-  wcspos[0] = xout[0];
-  wcspos[1] = yout[0];
-  astNorm( wcs->astwcs, wcspos );
-  wcspos[0] /= DEG;
-  wcspos[1] /= DEG;
-  
+  if ( wcs->astwcs != NULL ) {
+      astTran2( wcs->astwcs, 1, xin, yin, 1, xout, yout );
+      wcspos[0] = xout[0];
+      wcspos[1] = yout[0];
+      astNorm( wcs->astwcs, wcspos );
+      wcspos[0] /= DEG;
+      wcspos[1] /= DEG;
+  }
+  else {
+      wcspos[0] = 0.0;
+      wcspos[1] = 0.0;
+  }
   if ( ! astOK )
     {
     astClearStatus;
@@ -135,7 +140,15 @@ int	wcs_to_raw(wcsstruct *wcs, double *wcspos, double *pixpos)
 
   xin[0] = wcspos[0] * DEG;
   yin[0] = wcspos[1] * DEG;
-  astTran2( wcs->astwcs, 1, xin, yin, 0, xout, yout );
+  if ( wcs->astwcs != NULL ) {
+      astTran2( wcs->astwcs, 1, xin, yin, 0, xout, yout );
+      pixpos[0] = xout[0];
+      pixpos[1] = yout[0];
+  }
+  else {
+      pixpos[0] = 0.0;
+      pixpos[1] = 0.0;
+  }
   if ( ! astOK )
     {
     astClearStatus;

@@ -474,7 +474,7 @@ void	readimagehead(picstruct *field)
       field->fitsheadsize = nhead;
   }
   else {
-      field->fitshead = "END ";
+      field->fitshead = "END                                         ";
       field->fitsheadsize = 1;
   }
 
