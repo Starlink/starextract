@@ -1,7 +1,7 @@
 NUMBER                   Running object number                                    
 #EXT_NUMBER               FITS extension number                                    
-#FLUX_ISO                 Isophotal flux                                            [count]
-#FLUXERR_ISO              RMS error for isophotal flux                              [count]
+FLUX_ISO                 Isophotal flux                                            [count]
+FLUXERR_ISO              RMS error for isophotal flux                              [count]
 #MAG_ISO                  Isophotal magnitude                                       [mag]
 #MAGERR_ISO               RMS error for isophotal magnitude                         [mag]
 #FLUX_ISOCOR              Corrected isophotal flux                                  [count]
@@ -12,8 +12,8 @@ NUMBER                   Running object number
 #FLUXERR_APER             RMS error vector for aperture flux(es)                    [count]
 #MAG_APER                 Fixed aperture magnitude vector                           [mag]
 #MAGERR_APER              RMS error vector for fixed aperture mag.                  [mag]
-#FLUX_AUTO                Flux within a Kron-like elliptical aperture               [count]
-#FLUXERR_AUTO             RMS error for AUTO flux                                   [count]
+FLUX_AUTO                Flux within a Kron-like elliptical aperture               [count]
+FLUXERR_AUTO             RMS error for AUTO flux                                   [count]
 #MAG_AUTO                 Kron-like elliptical aperture magnitude                   [mag]
 #MAGERR_AUTO              RMS error for AUTO magnitude                              [mag]
 #FLUX_PETRO               Flux within a Petrosian-like elliptical aperture          [count]
@@ -38,7 +38,7 @@ NUMBER                   Running object number
 #PETRO_RADIUS             Petrosian apertures in units of A or B                   
 #BACKGROUND               Background at centroid position                           [count]
 #THRESHOLD                Detection threshold above background                      [count]
-#FLUX_MAX                 Peak flux above background                                [count]
+FLUX_MAX                 Peak flux above background                                [count]
 ISOAREA_IMAGE            Isophotal area above Analysis threshold                   [pixel**2]
 #ISOAREAF_IMAGE           Isophotal area (filtered) above Detection threshold       [pixel**2]
 #XMIN_IMAGE               Minimum x-coordinate among detected pixels                [pixel]
@@ -79,9 +79,9 @@ Y_IMAGE                  Object position along y                                
 #X2_WORLD                 Variance along X-WORLD (alpha)                            [deg**2]
 #Y2_WORLD                 Variance along Y-WORLD (delta)                            [deg**2]
 #XY_WORLD                 Covariance between X-WORLD and Y-WORLD                    [deg**2]
-#CXX_IMAGE                Cxx object ellipse parameter                              [pixel**(-2)]
-#CYY_IMAGE                Cyy object ellipse parameter                              [pixel**(-2)]
-#CXY_IMAGE                Cxy object ellipse parameter                              [pixel**(-2)]
+CXX_IMAGE                Cxx object ellipse parameter                              [pixel**(-2)]
+CYY_IMAGE                Cyy object ellipse parameter                              [pixel**(-2)]
+CXY_IMAGE                Cxy object ellipse parameter                              [pixel**(-2)]
 #CXX_WORLD                Cxx object ellipse parameter (WORLD units)                [deg**(-2)]
 #CYY_WORLD                Cyy object ellipse parameter (WORLD units)                [deg**(-2)]
 #CXY_WORLD                Cxy object ellipse parameter (WORLD units)                [deg**(-2)]
@@ -192,7 +192,7 @@ FLAGS                    Extraction flags
 #FWHM_IMAGE               FWHM assuming a gaussian core                             [pixel]
 #FWHM_WORLD               FWHM assuming a gaussian core                             [deg]
 ELONGATION               A_IMAGE/B_IMAGE                                          
-#ELLIPTICITY              1 - B_IMAGE/A_IMAGE                                      
+ELLIPTICITY              1 - B_IMAGE/A_IMAGE                                      
 #POLAR_IMAGE              (A_IMAGE^2 - B_IMAGE^2)/(A_IMAGE^2 + B_IMAGE^2)          
 #POLAR_WORLD              (A_WORLD^2 - B_WORLD^2)/(A_WORLD^2 + B_WORLD^2)          
 #POLARWIN_IMAGE           (AWIN^2 - BWIN^2)/(AWIN^2 + BWIN^2)                      
