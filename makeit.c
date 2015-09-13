@@ -620,6 +620,11 @@ void	makeit()
   if (prefs.xml_flag || prefs.cat_type==ASCII_VO)
     end_xml();
 
+/* Free FITS headers (now catalogues are closed). */
+  if (field->fitsheadsize > 0) {
+      free(field->fitshead);
+  }
+
   return;
   }
 

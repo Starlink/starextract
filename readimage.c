@@ -465,13 +465,26 @@ void	readimagehead(picstruct *field)
   /*  Look for the FITS header and map, note never unmap, let
    *  annul clear this resource. */
   ndfXstat( field->ndf, "FITS", &exists, &status );
+  field->fitsheadsize = 0;
   if ( exists ) {
       HDSLoc *fitsloc = NULL;
       size_t nhead = 0;
+      char *fitshead;
       ndfXloc( field->ndf, "FITS", "READ", &fitsloc, &status );
-      datMapV( fitsloc, "_CHAR*80", "READ", (void**) &field->fitshead,
+      datMapV( fitsloc, "_CHAR*80", "READ", (void**) &fitshead,
                &nhead, &status );
       field->fitsheadsize = nhead;
+
+      /*  Make sure we have an "END" card. NDFs may not add these. */
+      if ( strncmp( fitshead+(80*(nhead-1)), "END     ", 8 ) != 0 ) {
+          QMEMCPY2( fitshead, field->fitshead, char, (nhead + 1)*80,
+                    nhead*80 );
+          strncpy( field->fitshead+(80*nhead), "END     ", 8 );
+          field->fitsheadsize = nhead + 1;
+      }
+      else {
+          QMEMCPY2( fitshead, field->fitshead, char, nhead*80, nhead*80 );
+      }
   }
   else {
       field->fitshead = "END                                         ";

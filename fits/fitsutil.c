@@ -146,12 +146,7 @@ int	fitsfind(char *fitsbuf, char *keyword)
    int	i, len, nheaders;
 
   len = strlen(keyword);
-
-/* Add some defensive programming for Starlink NDFs, where the FITS-airlock
-   headers might not be terminated by an END keyword.  Constrain the search
-   to the number of headers and thereby prevent a segmentation violation. */
-  nheaders = strlen(fitsbuf) / 80;
-  for (i=0; strncmp(ptr=&fitsbuf[80*i], "END     ", 8)  && i<nheaders; i++)
+  for (i=0; strncmp(ptr=&fitsbuf[80*i], "END     ", 8); i++)
     if (!wstrncmp(ptr, keyword, len))
       return i;
   if (strncmp(keyword, "END     ", 8))
